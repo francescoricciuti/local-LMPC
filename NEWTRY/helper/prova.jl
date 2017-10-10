@@ -193,7 +193,7 @@ function trackFrameConversion(states_x::Array{Float64},x_track::Array{Float64},y
 
     eyabs, idx_min_Dist = findmin(DistanceNew)
 
-    println("eyabs= ",eyabs)
+    #println("eyabs= ",eyabs)
 
     s = S_Value[idx_min_Dist]
 
@@ -280,5 +280,5 @@ function trackFrameConversion(states_x::Array{Float64},x_track::Array{Float64},y
     zCurr_s = zeros(4)
     v_abs = sqrt(states_x[3].^2 + states_x[4].^2)
     zCurr_s = [s ey epsi v_abs]
-    return zCurr_s, coeffCurv
+    return zCurr_s, coeffCurv, XCurve,YCurve,xyPathAngle
 end

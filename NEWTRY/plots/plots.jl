@@ -7,7 +7,10 @@ using JLD, ProfileView
 matplotlib[:style][:use]("classic") # somehow my julia version changed plotting style 
 
 
+
 include("../helper/classes.jl")
+include("../helper/prova.jl")
+include("createBorders.jl")
 
 
 function eval_sim(code::AbstractString,laps=Array{Int64})
@@ -26,6 +29,8 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
 
     v_ref = mpcParams.vPathFollowing
 
+    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
+
 
 
     close("all")
@@ -39,7 +44,8 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
     
         figure()
         plot(x,y)
-        plot(x_track',y_track')
+        plot(x_track',y_track',inner_x,inner_y,outer_x,outer_y)
+        axis("equal")
         grid("on")
         title("X-Y view of Lap $i")
 

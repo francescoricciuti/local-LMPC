@@ -39,7 +39,7 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     modelParams.C               = 1.6  
 
 
-    oldTraj.n_oldTraj           = n_laps                                                     # number of old Trajectories for safe set
+    oldTraj.n_oldTraj           = simVariables.n_laps                                                     # number of old Trajectories for safe set
     oldTraj.oldTraj             = zeros(buffersize,4,oldTraj.n_oldTraj)                  # old trajectories in s-ey frame
     oldTraj.oldTrajXY           = zeros(buffersize,6,oldTraj.n_oldTraj)                  # old trajectories in x-y frame
     oldTraj.oldNIter            = zeros(oldTraj.n_oldTraj)                               # how many iterations to complete that particular iteration
