@@ -5,8 +5,8 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 15        # number of laps we want to simulate 
-    simVariables.n_pf           = 15        # number of path following laps (must be at least 2)
+    simVariables.n_laps         = 4        # number of laps we want to simulate 
+    simVariables.n_pf           = 4        # number of path following laps (must be at least 2)
 
     mpcParams.N                 = 10                        #lenght of prediction horizon
     mpcParams.vPathFollowing    = 0.6                       # reference velocity for the path following stage

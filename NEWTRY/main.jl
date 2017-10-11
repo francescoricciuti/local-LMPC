@@ -134,10 +134,10 @@ for j=1:n_laps                 # main loop over all laps
    while i<=length(t)-1 && !finished    # as long as we have not reached the maximal iteration time for one round or ended the round
    #for indice=1:10
         tic()  # tic for iteration time calculation (tt_it)
-        #println("zCurr_x($i )=",zCurr_x[i,:])
+        println("zCurr_x($i )=",zCurr_x[i,:])
         # transforms states form x-y coordinates to s-ey coordinates and approximates a curvature around the current postion, returning corresponding polynomial coefficients
         zCurr_s[i,:], trackCoeff.coeffCurvature = trackFrameConversion(zCurr_x[i,:],x_track,y_track,trackCoeff, i)
-        #println("zCurr_s($i )=",zCurr_s[i,:])
+        println("zCurr_s($i )=",zCurr_s[i,:])
 
         if i == 1 && zCurr_s[1,1] > 2 # if we are in the first iteration and, after the conversion from x-y to s-ey, it results that the s coordinate is greater than 2 
                                       #(meaning, for example, that we haven't crossed the start line yet, thus having an s coordinate big), we force the s coordinate to
