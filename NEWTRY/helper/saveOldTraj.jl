@@ -2,7 +2,7 @@
 
 
 
-function saveOldTraj(oldTraj,cost_log::Array{Float64},zCurr::Array{Float64}, zCurr_x::Array{Float64},uCurr::Array{Float64},lapStatus::classes.LapStatus,simVariables::classes.SimulationVariables,z_pred_log::Array{Float64},u_pred_log::Array{Float64},modelParams::classes.ModelParams,curvature_curr::Array{Float64})
+function saveOldTraj(oldTraj,cost_log::Array{Float64},zCurr::Array{Float64}, zCurr_x::Array{Float64},uCurr::Array{Float64},lapStatus::classes.LapStatus,simVariables::classes.SimulationVariables,z_pred_log::Array{Float64},u_pred_log::Array{Float64},modelParams::classes.ModelParams,curvature_curr::Array{Float64},alpha_log::Array{Float64})
 
     i               = lapStatus.currentIt           # current iteration number, just to make notation shorter
     costLap         = i                             # define as cost of the lap the number of iterations it took to arrive at the finish line
@@ -25,21 +25,21 @@ function saveOldTraj(oldTraj,cost_log::Array{Float64},zCurr::Array{Float64}, zCu
     end
 
 
-    if lapStatus.currentLap == 1 # if it's the first lap, fill all oldTraj with the results of the first lap
-        for k= 1:oldTraj.n_oldTraj                 
-            oldTraj.oldTraj[:,:,k]                    = zCurr_export          # ... just save everything
-            oldTraj.oldInput[:,:,k]                   = uCurr_export
-            oldTraj.oldTrajXY[1:size(zCurr_x)[1],:,k] = zCurr_x
-            oldTraj.oldNIter[k]                       = costLap
-            oldTraj.costs[:,:,k]                      = cost_log[:,:,1]
-            oldTraj.z_pred_sol[:,:,:,k]               = z_pred_log[:,:,:,1]
-            oldTraj.u_pred_sol[:,:,:,k]               = u_pred_log[:,:,:,1]
-            oldTraj.cost2target[:,k]                  = cost2target
-            oldTraj.curvature[:,k]                    = curvature_curr
+    # if lapStatus.currentLap == 1 # if it's the first lap, fill all oldTraj with the results of the first lap
+    #     for k= 1:oldTraj.n_oldTraj                 
+    #         oldTraj.oldTraj[:,:,k]                    = zCurr_export          # ... just save everything
+    #         oldTraj.oldInput[:,:,k]                   = uCurr_export
+    #         oldTraj.oldTrajXY[1:size(zCurr_x)[1],:,k] = zCurr_x
+    #         oldTraj.oldNIter[k]                       = costLap
+    #         oldTraj.costs[:,:,k]                      = cost_log[:,:,1]
+    #         oldTraj.z_pred_sol[:,:,:,k]               = z_pred_log[:,:,:,1]
+    #         oldTraj.u_pred_sol[:,:,:,k]               = u_pred_log[:,:,:,1]
+    #         oldTraj.cost2target[:,k]                  = cost2target
+    #         oldTraj.curvature[:,k]                    = curvature_curr
     
 
-        end
-    else  # if it isn't the first lap, just save everything in its correct place (currentLap)
+    #     end
+    # else  # if it isn't the first lap, just save everything in its correct place (currentLap)
         oldTraj.oldTraj[:,:,currentLap]                    = zCurr_export
         oldTraj.oldInput[:,:,currentLap]                   = uCurr_export
         oldTraj.oldTrajXY[1:size(zCurr_x)[1],:,currentLap] = zCurr_x
@@ -49,6 +49,7 @@ function saveOldTraj(oldTraj,cost_log::Array{Float64},zCurr::Array{Float64}, zCu
         oldTraj.u_pred_sol[:,:,:,currentLap]               = u_pred_log[:,:,:,currentLap]
         oldTraj.cost2target[:,currentLap]                  = cost2target
         oldTraj.curvature[:,currentLap]                    = curvature_curr
-      
-    end
+        oldTraj.oldAlpha[:,:,currentLap]                   = alpha_log[:,:,currentLap]
+       
+    #end
 end

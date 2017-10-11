@@ -3,18 +3,20 @@
 function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,modelParams::classes.ModelParams,
                                 oldTraj::classes.OldTrajectory,mpcSol::classes.MpcSol,lapStatus::classes.LapStatus,simVariables::classes.SimulationVariables,selectedStates::classes.SelectedStates)
     
-    simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
+    simVariables.buffersize     = 1000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 15        # number of laps we want to simulate 
-    simVariables.n_pf           = 15        # number of path following laps (must be at least 2)
+    simVariables.n_laps         = 4        # number of laps we want to simulate 
+    simVariables.n_pf           = 3        # number of path following laps (must be at least 2)
 
     mpcParams.N                 = 10                        #lenght of prediction horizon
     mpcParams.vPathFollowing    = 0.6                       # reference velocity for the path following stage
-    mpcParams.QderivZ           = 0.0*[0,0.0,0.1,0.1]       # weights for the states in the derivative cost
+    mpcParams.QderivZ           = 0.1*[0,0.0,0.1,0.1]       # weights for the states in the derivative cost
     mpcParams.QderivU           = 0.1*[1.0,10]              # weights for the control inputs in the derivative cost
-    mpcParams.R                 = 1.0*[1.0,1.0]             # weights on the control inputs
+    mpcParams.R                 = 0.0*[1.0,1.0]             # weights on the control inputs
     mpcParams.Q                 = [0.0,50.0,0.1,10.0]       # weights on the states for path following
     mpcParams.Q_cost            = 0.7                       # weight on the cost to get from a given point to the targe
+    mpcParams.Q_lane            = 1.0                       # weight on the soft constraint on the Q_lane
+    mpcParams.Q_alpha           = 1.0                       # weight on the soft constraint for convex hull
 
     trackCoeff.nPolyCurvature   = 4                       # 4th order polynomial for curvature approximation
     trackCoeff.nPolyXY          = 6 
@@ -38,6 +40,9 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     modelParams.B               = 6.0  
     modelParams.C               = 1.6  
 
+    selectedStates.Np           = 10                            # Number of points to take from each previous trajectory to build the convex hull
+    selectedStates.selStates    = zeros(2*selectedStates.Np,4)  
+    selectedStates.statesCost   = zeros(2*selectedStates.Np)
 
     oldTraj.n_oldTraj           = simVariables.n_laps                                                     # number of old Trajectories for safe set
     oldTraj.oldTraj             = zeros(buffersize,4,oldTraj.n_oldTraj)                  # old trajectories in s-ey frame
@@ -49,18 +54,17 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     oldTraj.u_pred_sol          = zeros(mpcParams.N,2,buffersize,oldTraj.n_oldTraj)      # predicted input for each iteration of past rounds
     oldTraj.cost2target         = zeros(buffersize,oldTraj.n_oldTraj)                    # number of iterations needed to arrive at the target
     oldTraj.curvature           = zeros(buffersize,oldTraj.n_oldTraj)                    # all the curvatures calculated in each iteration of each lap
+    oldTraj.oldAlpha            = zeros(2*selectedStates.Np,buffersize,oldTraj.n_oldTraj)# all the alphas from all iterations of all LMPC laps
 
-    mpcSol.u                    = zeros(mpcParams.N,2)      # array containing all the control inputs computed by the MPC at a given iteration
-    mpcSol.z                    = zeros(mpcParams.N+1,4)    # array containing all the states computed by the MPC at a given iteration
-    mpcSol.cost                 = zeros(5)                  # optimal costs as computed by the MPC at a given iteration
-
+    mpcSol.u                    = zeros(mpcParams.N,2)              # array containing all the control inputs computed by the MPC at a given iteration
+    mpcSol.z                    = zeros(mpcParams.N+1,4)            # array containing all the states computed by the MPC at a given iteration
+    mpcSol.cost                 = zeros(5)                          # optimal costs as computed by the MPC at a given iteration
+    mpcSol.alpha                = zeros(buffersize,2*selectedStates.Np,oldTraj.n_oldTraj)  # coefficients of the convex hull
     
     lapStatus.currentLap        = 1         # initialize lap number
     lapStatus.currentIt         = 0         # current iteration in lap 
 
-    selectedStates.Np           = 10                            # Number of points to take from each previous trajectory to build the convex hull
-    selectedStates.selStates    = zeros(2*selectedStates.Np,4)  
-    selectedStates.statesCost   = zeros(2*selectedStates.Np)
+    
 
     
 end

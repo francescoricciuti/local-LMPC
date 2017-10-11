@@ -49,6 +49,9 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
         grid("on")
         title("X-Y view of Lap $i")
 
+        #println("x= ",x)
+        #println("y= ",y)
+
         t=linspace(1,size(oldTraj.oldTraj[:,2,i])[1],size(oldTraj.oldTraj[:,2,i])[1])
 
         figure()
@@ -76,9 +79,7 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
 end
 
 
-function animation(code::AbstractString,laps=Array{Int64})
-
-
+function eval_pred(code::AbstractString,laps=Array{Int64})
 
     file = "../data/$(code).jld" 
 
@@ -96,13 +97,108 @@ function animation(code::AbstractString,laps=Array{Int64})
 
     inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
 
+    t  = linspace(1,9,9)
+    tN = linspace(1,7,7)
+
+   
+
+    for i = laps
+        figure()
+
+        for j = 2:2000
+
+            close("all")
+        
+        # s    = oldTraj.oldTraj[:,1,i]
+        # ey   = oldTraj.oldTraj[:,2,i]
+        # epsi = oldTraj.oldTraj[:,3,i]
+        # v    = oldTraj.oldTraj[:,4,i]
+
+            s_pred    = oldTraj.z_pred_sol[:,1,j,i]
+            ey_pred   = oldTraj.z_pred_sol[:,2,j,i]
+            epsi_pred = oldTraj.z_pred_sol[:,3,j,i]
+            v_pred    = oldTraj.z_pred_sol[:,4,j,i]
+
+            println(size(s_pred))
+           
+            olds_1    = oldTraj.oldTraj[j-1:j+7,1,i-1]
+            olds_2    = oldTraj.oldTraj[j-1:j+7,1,i-2]
+            oldey_1   = oldTraj.oldTraj[j-1:j+7,2,i-1]
+            oldey_2   = oldTraj.oldTraj[j-1:j+7,2,i-2]
+            oldepsi_1 = oldTraj.oldTraj[j-1:j+7,3,i-1]
+            oldepsi_2 = oldTraj.oldTraj[j-1:j+7,3,i-2]
+            oldv_1    = oldTraj.oldTraj[j-1:j+7,4,i-1]
+            oldv_2    = oldTraj.oldTraj[j-1:j+7,4,i-2]
+
+            
+            
+
+            subplot(221)
+            plot(tN,s_pred,"or")
+            plot(t,olds_1,"b")
+            plot(t,olds_2,"g")
+            title("State S in lap $i ")
+            grid("on")
+            subplot(222)
+            plot(tN,ey_pred,"or")
+            plot(t,oldey_1,"b")
+            plot(t,oldey_2,"g")
+            title("State ey in lap $i ")
+            grid("on")
+            subplot(223)
+            plot(tN,epsi_pred,"or")
+            plot(t,oldepsi_1,"b")
+            plot(t,oldepsi_2,"g")
+            title("State epsi in lap $i ")
+            grid("on")
+            subplot(224)
+            plot(tN,v_pred,"or")
+            plot(t,oldv_1,"b")
+            plot(t,oldv_2,"g")
+            title("State v in lap $i ")
+            grid("on")
+
+            sleep(5)
+        end
+    end
+end
+
+
+
+
+function animation(code::AbstractString,laps=Array{Int64})
+
+
+
+    file = "../data/$(code).jld" 
+
+    Data = load(file)
+
+    x_track = Data["x_track"]
+    y_track = Data["y_track"]
+    trackCoeff = Data["trackCoeff"]
+    modelParams = Data["modelParams"]
+    mpcParams = Data["mpcParams"]
+    buffersize = Data["buffersize"]
+    oldTraj     = Data["oldTraj"]
+
+    N = mpcParams.N
+    predTraj = oldTraj.z_pred_sol
+    predInp  = oldTraj.u_pred_sol
+
+    v_ref = mpcParams.vPathFollowing
+
+    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
+
     #Construct Figure and Plot Data
     fig = figure("PathFollowing",figsize=(10,10))
     ax = axes(xlim = (-15,15),ylim=(-15,4))
     global line1 = ax[:plot]([],[],"or")[1]
     global line2 = ax[:plot]([],[],"b-")[1]
     global line3 = ax[:plot]([],[],"g-")[1]
-    global line4 = ax[:plot]([],[],"b-")[1]
+    global line4 = ax[:plot]([],[],"b-")[1]   
+    
+
 
 
     function init()

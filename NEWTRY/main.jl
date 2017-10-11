@@ -13,6 +13,7 @@ include("helper/prova.jl")
 include("helper/solveMPCmodels.jl")
 include("helper/simModels.jl")
 include("helper/saveOldTraj.jl")
+include("helper/convhullStates.jl")
 
 
 
@@ -66,18 +67,7 @@ t          = collect(0:dt:(buffersize-1)*dt)  # time array
 
 println("Initialize Model........")
 mdl_Path = initPathFollowingModel(mpcParams,modelParams,trackCoeff)
-
-###################################################################################################################################
-
-# !!!!!!!! STILL NEED TO DEFINE LMPC INIT FILE!!!!!!!!
-#mdl_LMPC = initLearningModel(mpcParams,modelParams,trackCoeff,mpcCoeff,oldTraj.n_oldTraj,selectedStates)
-
-# println("Initial solve........")
-# solve(mdl_LMPC.mdl)# intial solve is necessary for LMPC model to prevent an invalid number error. seems to be caused by problems with the coefficients of the terminal cost and terminal set in the controller.
-# println("Initial solve done!")
-# println("*******************************************************")
-
-######################################################################################################################################
+mdl_LMPC = initLearningModel(mpcParams,modelParams,trackCoeff,selectedStates)
 
 
 
@@ -87,8 +77,8 @@ selStates_log  = zeros(2*selectedStates.Np,4,length(t),n_laps)  #array to log th
 statesCost_log = zeros(2*selectedStates.Np,length(t),n_laps)    #array to log the selected states' costs in every iteration of every lap
 z_pred_log     = zeros(mpcParams.N+1,4,length(t),n_laps)        #array to log the predicted states for all time steps for later plotting
 u_pred_log     = zeros(mpcParams.N,2,length(t),n_laps)          #array to log the predicted inputs for all time steps for later plotting
-cost_log       = zeros(5,length(t),n_laps)                    #logs the MPC costs with values for all expresions in the cost function (terminal cost, lane cost, input cost etc.)
-
+cost_log       = zeros(5,length(t),n_laps)                      #logs the MPC costs with values for all expresions in the cost function (terminal cost, lane cost, input cost etc.)
+alpha_log      = zeros(2*selectedStates.Np,length(t),n_laps)    #logs the coefficients for the convex hull
 #### Initialize variables needed for the main loops
 
 j              = 1                                               # set j to one as we start at the first lap 
@@ -119,7 +109,8 @@ for j=1:n_laps                 # main loop over all laps
     lapStatus.currentLap = j   # keep track of the current lap updating the value in lapStatus
 
     # if we are not in the first lap, initialize states and inputs with the last values obtained from the previous lap
-    if j>1       
+    if j>1    
+        #zCurr_x = zeros(length(t),6)
         zCurr_x[1,:] = z_final_x
         uCurr[1,:] = u_final
     end
@@ -134,10 +125,10 @@ for j=1:n_laps                 # main loop over all laps
    while i<=length(t)-1 && !finished    # as long as we have not reached the maximal iteration time for one round or ended the round
    #for indice=1:10
         tic()  # tic for iteration time calculation (tt_it)
-        #println("zCurr_x($i )=",zCurr_x[i,:])
+        println("zCurr_x($i )=",zCurr_x[i,:])
         # transforms states form x-y coordinates to s-ey coordinates and approximates a curvature around the current postion, returning corresponding polynomial coefficients
         zCurr_s[i,:], trackCoeff.coeffCurvature = trackFrameConversion(zCurr_x[i,:],x_track,y_track,trackCoeff, i)
-        #println("zCurr_s($i )=",zCurr_s[i,:])
+        println("zCurr_s($i )=",zCurr_s[i,:])
 
         if i == 1 && zCurr_s[1,1] > 2 # if we are in the first iteration and, after the conversion from x-y to s-ey, it results that the s coordinate is greater than 2 
                                       #(meaning, for example, that we haven't crossed the start line yet, thus having an s coordinate big), we force the s coordinate to
@@ -175,11 +166,16 @@ for j=1:n_laps                 # main loop over all laps
             solvePF_MPC(mdl_Path,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]')
             #println("predicted trajectory at iteration $i ",mpcSol.z[1:5,:])
 ###########################################################################################################################################
-        # elseif j > n_pf    # if we have already completed all the path following laps, compute the states needed for the convex hull and solve the LMPC
+        elseif j > n_pf    # if we have already completed all the path following laps, compute the states needed for the convex hull and solve the LMPC
 
-        #     STILL TO BE DESIGNED!! convhullStates(oldTraj, mpcCoeff, posInfo, mpcParams,lapStatus, selectedStates)
-        #     STILL TO BE DESIGNED!! solveLearningMpcProblem()
+            #println("zCurr_s[$i,:]= ",zCurr_s[i,:])
 
+            convhullStates(oldTraj, posInfo, mpcParams,lapStatus, selectedStates)
+            solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
+
+            #println("predicted trajectory= ",mpcSol.z)
+
+            alpha_log[:,i,j] = mpcSol.alpha # save the coefficients for convex hull computed in iteration i of lap j
         
 ###########################################################################################################################################à
         end
@@ -231,7 +227,7 @@ for j=1:n_laps                 # main loop over all laps
 
     #### Save data of the current lap in OldTrajectory
 
-    saveOldTraj(oldTraj,cost_log,zCurr_s, zCurr_x,uCurr,lapStatus,simVariables,z_pred_log,u_pred_log,modelParams,curvature_curr)
+    saveOldTraj(oldTraj,cost_log,zCurr_s, zCurr_x,uCurr,lapStatus,simVariables,z_pred_log,u_pred_log,modelParams,curvature_curr,alpha_log)
 
 end
 

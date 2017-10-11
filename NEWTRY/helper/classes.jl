@@ -31,10 +31,11 @@ type OldTrajectory                  # informations about previous trajectories
     u_pred_sol::Array{Float64}      # all the control actions predicted by the MPC
     cost2target::Array{Float64}     # cost to arrive at the target, i.e. how many iterations from the start to the end of the lap
     curvature::Array{Float64}       # all the curvature calculated in each step of each lap
+    oldAlpha::Array{Float64}        # all the alphas computed in each iteration of each LMPC lap
    
     OldTrajectory(n_oldTraj = 0, oldTraj=Float64[],oldTrajXY=Float64[],oldNIter=Float64[],oldInput=Float64[],costs=Float64[],z_pred_sol=Float64[],
-                  u_pred_sol=Float64[],cost2target= Float64[],curvature=Float64[]) =
-                 new(n_oldTraj, oldTraj,oldTrajXY,oldNIter,oldInput,costs,z_pred_sol,u_pred_sol,cost2target,curvature)
+                  u_pred_sol=Float64[],cost2target= Float64[],curvature=Float64[],oldAlpha=Float64[]) =
+                 new(n_oldTraj, oldTraj,oldTrajXY,oldNIter,oldInput,costs,z_pred_sol,u_pred_sol,cost2target,curvature,oldAlpha)
 end
 
 type SelectedStates                 # Values needed for the convex hull formulation
@@ -53,9 +54,11 @@ type MpcParams                     # parameters for MPC
     R::Array{Float64,1}            # weights on the control inputs
     Q::Array{Float64,1}            # weights on the states for path following
     Q_cost::Float64                # weight on the cost to get from a given point to the target
+    Q_lane::Float64                # weight on the soft constraint for the lane
+    Q_alpha::Float64               # weight on the soft constraint for the convex hull
 
-    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7) = 
-    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost)
+    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0) = 
+    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha)
 end
 
 type PosInfo            # current position information
@@ -72,7 +75,8 @@ type MpcSol                      # MPC solution output
     u::Array{Float64}            # array containing all the inputs computed by the MPC
     z::Array{Float64}            # array containing all the inputs computed by the MPC
     cost::Array{Float64}         # array containing the values of the cost functions of this particular MPC optimization
-    MpcSol(a_x=0.0,d_f=0.0,solverStatus=Symbol(),u=Float64[],z=Float64[],cost=Float64[]) = new(a_x,d_f,solverStatus,u,z,cost)
+    alpha::Array{Float64}        # parameters of the convex hull
+    MpcSol(a_x=0.0,d_f=0.0,solverStatus=Symbol(),u=Float64[],z=Float64[],cost=Float64[],alpha=Float64[]) = new(a_x,d_f,solverStatus,u,z,cost,alpha)
 end
 
 
