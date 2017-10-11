@@ -1,7 +1,7 @@
 using JLD
 using PyPlot
 using PyCall
-@pyimport matplotlib.animation as animation
+@pyimport matplotlib.animation as anim
 using JLD, ProfileView
 
 matplotlib[:style][:use]("classic") # somehow my julia version changed plotting style 
@@ -43,8 +43,8 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
         y = oldTraj.oldTrajXY[:,2,i]
     
         figure()
-        plot(x,y)
-        plot(x_track',y_track',inner_x,inner_y,outer_x,outer_y)
+        plot(x,y,"g")
+        plot(x_track',y_track',"r",inner_x,inner_y,"b",outer_x,outer_y,"b")
         axis("equal")
         grid("on")
         title("X-Y view of Lap $i")
@@ -75,67 +75,77 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
 
 end
 
-function eval_pred(code::AbstractString,laps=Array{Int64},iter=Array{Int64})
+
+function animation(code::AbstractString,laps=Array{Int64})
+
+
 
     file = "../data/$(code).jld" 
 
     Data = load(file)
 
-    x_track     = Data["x_track"]
-    y_track     = Data["y_track"]
-    trackCoeff  = Data["trackCoeff"]
+    x_track = Data["x_track"]
+    y_track = Data["y_track"]
+    trackCoeff = Data["trackCoeff"]
     modelParams = Data["modelParams"]
-    mpcParams   = Data["mpcParams"]
-    buffersize  = Data["buffersize"]
+    mpcParams = Data["mpcParams"]
+    buffersize = Data["buffersize"]
     oldTraj     = Data["oldTraj"]
 
-    close("all")
-    println("starting states= ",oldTraj.oldTraj[2,:,1])
-    println("predicted states= ",oldTraj.z_pred_sol[2,:,2,1])
-    println("next states= ",oldTraj.oldTraj[3,:,1])
-    println("predicted  inputs= ",oldTraj.u_pred_sol[2,:,2,1])
+    v_ref = mpcParams.vPathFollowing
 
-    # for i = laps
-    #     for k = iter
-    #         s_pred = oldTraj.z_pred_sol[:,1,k,i]
+    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
 
-    #         println(oldTraj.z_pred_sol[:,2,k,i])
-
-    #         ey_pred = oldTraj.z_pred_sol[:,2,k,i]
-
-    #         epsi_pred = oldTraj.z_pred_sol[:,3,k,i]
-
-    #         v_pred = oldTraj.z_pred_sol[:,4,k,i]
-
-    #         t=linspace(1,mpcParams.N+1,mpcParams.N+1)
-
-    #         figure()
-    #         plot(t,s_pred)
-    #         title("s, Lap $i, iteration $k ")
-    #         grid("on")
+    #Construct Figure and Plot Data
+    fig = figure("PathFollowing",figsize=(10,10))
+    ax = axes(xlim = (-15,15),ylim=(-15,4))
+    global line1 = ax[:plot]([],[],"or")[1]
+    global line2 = ax[:plot]([],[],"b-")[1]
+    global line3 = ax[:plot]([],[],"g-")[1]
+    global line4 = ax[:plot]([],[],"b-")[1]
 
 
-    #         figure()
-    #         plot(t,ey_pred)
-    #         title("ey, Lap $i, iteration $k ")
-    #         grid("on")
-
-
-    #         figure()
-    #         plot(t,epsi_pred)
-    #         title("epsi, Lap $i, iteration $k ")
-    #         grid("on")
-
-
-    #         figure()
-    #         plot(t,v_pred)
-    #         title("v, Lap $i, iteration $k ")
-    #         grid("on")
-
-            
+    function init()
+        global line1
+        global line2
+        global line3
+        global line4
+        line1[:set_data]([],[])
+        line2[:set_data]([],[])
+        line3[:set_data]([],[])
+        line4[:set_data]([],[])
     
-    #     end
-    # end
+        return (line1,line2,line3,line4,Union{})  # Union{} is the new word for None
+    end
+
+    steps = 15
+
+    function animate(i)
+        k = i+1
+        global line1
+        global line2
+        global line3
+        global line4
+        
+        x = oldTraj.oldTrajXY[k,1,1]
+        y = oldTraj.oldTrajXY[k,2,1]
+        
+        line1[:set_data](x,y)
+        line2[:set_data](inner_x[:],inner_y[:])
+        line3[:set_data](x_track[:]',y_track[:]')
+        line4[:set_data](outer_x[:],outer_y[:])        
+        return (line1,line2,line3,line4,Union{})
+    end
+
+    myanim = anim.FuncAnimation(fig, animate, init_func=init, frames=1000, interval=20)
+
+    myanim[:save]("3Lines.mp4", bitrate=-1, extra_args=["-vcodec", "libx264", "-pix_fmt", "yuv420p"])
 
 
-end   
+    function html_video(filename)
+        base64_video = base64encode(open(readbytes, filename))
+        """<video controls src="data:video/x-m4v;base64,$base64_video">"""
+    end
+
+end
+
