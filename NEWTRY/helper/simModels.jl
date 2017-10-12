@@ -83,3 +83,29 @@ function simModel_dyn_x(z::Array{Float64},u::Array{Float64},dt::Float64,modelPar
     # and pass the solution to "simModel_exact_dyn_x"
     return zNext
 end
+
+
+function simModel_kin_x(z::Array{Float64},u::Array{Float64},modelParams::classes.ModelParams)
+
+   # kinematic bicycle model
+   # u[1] = acceleration
+   # u[2] = steering angle
+
+    local zNext::Array{Float64}
+    l_A = modelParams.l_A
+    l_B = modelParams.l_B
+    dt  = modelParams.dt    # time step
+
+    bta = atan(l_B/(l_A+l_B)*tan(u[2]))
+
+    zNext = z
+    zNext[1] = z[1] + dt*(z[3]*cos(z[3]+bta))     # x
+    zNext[2] = z[2] + dt*(z[3]*sin(z[3] + bta))   # y
+    zNext[3] = z[3] + dt*(u[1])                   # v
+    zNext[4] = 0 # not needed in kinematic model
+    zNext[5] = z[5] + dt*(z[3]/l_B*sin(bta))      # psi
+    zNext[6] = 0 # not needed in kinematic model
+    
+
+    return zNext
+end

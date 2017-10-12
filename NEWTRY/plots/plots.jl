@@ -31,6 +31,7 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
 
     inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
 
+    max_cost = findmax(oldTraj.costLap[:])[1]
 
 
     close("all")
@@ -38,6 +39,7 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
     for i = laps
 
         println("mean velocity of lap $i =",mean(oldTraj.oldTraj[:,4,i]))
+        println("cost of lap $i= ",oldTraj.costLap[i])
 
         x = oldTraj.oldTrajXY[:,1,i]
         y = oldTraj.oldTrajXY[:,2,i]
@@ -52,23 +54,23 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
         #println("x= ",x)
         #println("y= ",y)
 
-        t=linspace(1,size(oldTraj.oldTraj[:,2,i])[1],size(oldTraj.oldTraj[:,2,i])[1])
+        t=linspace(1,max_cost,max_cost)
 
         figure()
         subplot(221)
-        plot(t,oldTraj.oldTraj[:,1,i])
+        plot(t,oldTraj.oldTraj[1:max_cost,1,i])
         title("State S in lap $i ")
         grid("on")
         subplot(222)
-        plot(t,oldTraj.oldTraj[:,2,i])
+        plot(t,oldTraj.oldTraj[1:max_cost,2,i])
         title("State ey in lap $i ")
         grid("on")
         subplot(223)
-        plot(t,oldTraj.oldTraj[:,3,i])
+        plot(t,oldTraj.oldTraj[1:max_cost,3,i])
         title("State epsi in lap $i ")
         grid("on")
         subplot(224)
-        plot(t,oldTraj.oldTraj[:,4,i])
+        plot(t,oldTraj.oldTraj[1:max_cost,4,i])
         legend(["State v"])
         title("State v in lap $i ")
         grid("on")
@@ -135,14 +137,14 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             epsi_pred = oldTraj.z_pred_sol[:,3,j,i]
             v_pred    = oldTraj.z_pred_sol[:,4,j,i]
 
-            olds    = selectedStates[1:10,1,j,i]
-            olds2    = selectedStates[11:20,1,j,i]
-            oldey   = selectedStates[1:10,2,j,i]
-            oldey2   = selectedStates[11:20,2,j,i]
-            oldepsi = selectedStates[1:10,3,j,i]
-            oldepsi2 = selectedStates[11:20,3,j,i]
-            oldv    = selectedStates[1:10,4,j,i]
-            oldv2    = selectedStates[11:20,4,j,i]
+            olds    = selectedStates[1:20,1,j,i]
+            olds2    = selectedStates[21:40,1,j,i]
+            oldey   = selectedStates[1:20,2,j,i]
+            oldey2   = selectedStates[21:40,2,j,i]
+            oldepsi = selectedStates[1:20,3,j,i]
+            oldepsi2 = selectedStates[21:40,3,j,i]
+            oldv    = selectedStates[1:20,4,j,i]
+            oldv2    = selectedStates[21:40,4,j,i]
 
 
            

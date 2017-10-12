@@ -36,7 +36,6 @@ function solvePF_MPC(m::initPathFollowingModel,mpcSol::classes.MpcSol,mpcParams:
 end   
 
 
-# !!!!!!!!!!!!NEED TO DEFINE SOLVER FOR THE LEARNING MPC HERE!!!!!!!!!!!!!
 
 function solveLearning_MPC(m::initLearningModel,mpcSol::classes.MpcSol,mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,modelParams::classes.ModelParams,zCurr::Array{Float64},uCurr::Array{Float64},selectedStates::classes.SelectedStates)
 

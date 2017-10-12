@@ -14,8 +14,10 @@ type SimulationVariables
     buffersize::Int64  # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     n_laps::Int64      # number of laps we want to simulate 
     n_pf::Int64        # number of path following laps (must be at least 2)
+    postbuff::Int64    # number of postbuffer iteration to save
+    dynModel::Bool     # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
 
-    SimulationVariables(buffersize = 2000, n_laps = 30, n_pf = 3) = new(buffersize,n_laps,n_pf)
+    SimulationVariables(buffersize = 2000, n_laps = 30, n_pf = 3,postbuff=30,dynModel=true) = new(buffersize,n_laps,n_pf,postbuff,dynModel)
 
 end
 
@@ -32,10 +34,11 @@ type OldTrajectory                  # informations about previous trajectories
     cost2target::Array{Float64}     # cost to arrive at the target, i.e. how many iterations from the start to the end of the lap
     curvature::Array{Float64}       # all the curvature calculated in each step of each lap
     oldAlpha::Array{Float64}        # all the alphas computed in each iteration of each LMPC lap
+    costLap::Array{Float64}
    
     OldTrajectory(n_oldTraj = 0, oldTraj=Float64[],oldTrajXY=Float64[],oldNIter=Float64[],oldInput=Float64[],costs=Float64[],z_pred_sol=Float64[],
-                  u_pred_sol=Float64[],cost2target= Float64[],curvature=Float64[],oldAlpha=Float64[]) =
-                 new(n_oldTraj, oldTraj,oldTrajXY,oldNIter,oldInput,costs,z_pred_sol,u_pred_sol,cost2target,curvature,oldAlpha)
+                  u_pred_sol=Float64[],cost2target= Float64[],curvature=Float64[],oldAlpha=Float64[],costLap=Float64[]) =
+                 new(n_oldTraj, oldTraj,oldTrajXY,oldNIter,oldInput,costs,z_pred_sol,u_pred_sol,cost2target,curvature,oldAlpha,costLap)
 end
 
 type SelectedStates                 # Values needed for the convex hull formulation

@@ -216,7 +216,7 @@ type initLearningModel
 
         @variable(mdl, z_Ol[i=1:(N+1),j=1:4] ) # Define states (z=s,ey,epsi,v) with its upper and lower bounds
         @variable(mdl, u_Ol[i=1:N,j=1:2] )     # Define control inputs (u=a_x,d_f) with its upper and lower bounds
-        @variable(mdl, alpha[1:2*Np] <= 1)     # coefficients of the convex hull
+        @variable(mdl, alpha[1:2*Np] >= 0)     # coefficients of the convex hull
         @variable(mdl, eps_lane[1:N+1] >= 0)   # eps for soft lane constraints
         @variable(mdl, eps_alpha[1:4] >=0)     # eps for soft constraint on alpha
 
