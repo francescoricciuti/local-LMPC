@@ -3,7 +3,7 @@
 function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,modelParams::classes.ModelParams,
                                 oldTraj::classes.OldTrajectory,mpcSol::classes.MpcSol,lapStatus::classes.LapStatus,simVariables::classes.SimulationVariables,selectedStates::classes.SelectedStates)
     
-    simVariables.buffersize     = 1000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
+    simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
     simVariables.n_laps         = 4        # number of laps we want to simulate 
     simVariables.n_pf           = 3        # number of path following laps (must be at least 2)

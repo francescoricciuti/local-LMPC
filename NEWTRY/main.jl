@@ -110,7 +110,7 @@ for j=1:n_laps                 # main loop over all laps
 
     # if we are not in the first lap, initialize states and inputs with the last values obtained from the previous lap
     if j>1    
-        #zCurr_x = zeros(length(t),6)
+        zCurr_x = zeros(length(t),6)
         zCurr_x[1,:] = z_final_x
         uCurr[1,:] = u_final
     end
@@ -125,10 +125,10 @@ for j=1:n_laps                 # main loop over all laps
    while i<=length(t)-1 && !finished    # as long as we have not reached the maximal iteration time for one round or ended the round
    #for indice=1:10
         tic()  # tic for iteration time calculation (tt_it)
-        println("zCurr_x($i )=",zCurr_x[i,:])
+        #println("zCurr_x($i )=",zCurr_x[i,:])
         # transforms states form x-y coordinates to s-ey coordinates and approximates a curvature around the current postion, returning corresponding polynomial coefficients
         zCurr_s[i,:], trackCoeff.coeffCurvature = trackFrameConversion(zCurr_x[i,:],x_track,y_track,trackCoeff, i)
-        println("zCurr_s($i )=",zCurr_s[i,:])
+        #println("zCurr_s($i )=",zCurr_s[i,:])
 
         if i == 1 && zCurr_s[1,1] > 2 # if we are in the first iteration and, after the conversion from x-y to s-ey, it results that the s coordinate is greater than 2 
                                       #(meaning, for example, that we haven't crossed the start line yet, thus having an s coordinate big), we force the s coordinate to
@@ -191,8 +191,8 @@ for j=1:n_laps                 # main loop over all laps
         cost_log[:,i,j]               = mpcSol.cost  # save the optimal cost resulting from iteration i of lap j
         z_pred_log[:,:,i,j]           = mpcSol.z     # save the states computed in iteration i of lap j
         u_pred_log[:,:,i,j]           = mpcSol.u     # save the control actions computed in iteration i of lap j
-        #selStates_log[:,:,i,j]    = selectedStates.selStates 
-        #statesCost_log[:,i,j]     = selectedStates.statesCost
+        selStates_log[:,:,i,j]        = selectedStates.selStates 
+        statesCost_log[:,i,j]         = selectedStates.statesCost
         #println("predicted states, it $i = ",z_pred_log[:,:,i,j])
         tt_it[i]= toq() # toq for iteration time calculation 
 
@@ -252,6 +252,7 @@ jldopen(filename, "w") do file
     JLD.write(file, "mpcParams", mpcParams)
     JLD.write(file, "buffersize", buffersize)
     JLD.write(file, "oldTraj", oldTraj)
+    JLD.write(file,"selectedStates", selStates_log)
     
 
 end

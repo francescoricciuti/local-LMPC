@@ -92,18 +92,34 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
     mpcParams = Data["mpcParams"]
     buffersize = Data["buffersize"]
     oldTraj     = Data["oldTraj"]
+    selectedStates = Data["selectedStates"]
 
     v_ref = mpcParams.vPathFollowing
 
     inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
 
-    t  = linspace(1,9,9)
-    tN = linspace(1,7,7)
+    t  = linspace(1,10,10)
+    tN = linspace(1,11,11)
 
    
 
     for i = laps
-        figure()
+
+
+        # s_pred    = oldTraj.z_pred_sol[:,1,1,i]
+        # ey_pred   = oldTraj.z_pred_sol[:,2,1,i]
+        # olds    = selectedStates[1:10,1,1,i]
+        # olds2    = selectedStates[11:20,1,1,i]
+        # oldey   = selectedStates[1:10,2,1,i]
+        # oldey2   = selectedStates[11:20,2,1,i]
+        
+        # figure()
+        # plot(s_pred,ey_pred,"or")
+        # plot(olds,oldey,"b")
+        # plot(olds2,oldey2,"b")
+        # title("State S in lap $i ")
+        # grid("on")
+
 
         for j = 2:2000
 
@@ -119,44 +135,51 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             epsi_pred = oldTraj.z_pred_sol[:,3,j,i]
             v_pred    = oldTraj.z_pred_sol[:,4,j,i]
 
-            println(size(s_pred))
-           
-            olds_1    = oldTraj.oldTraj[j-1:j+7,1,i-1]
-            olds_2    = oldTraj.oldTraj[j-1:j+7,1,i-2]
-            oldey_1   = oldTraj.oldTraj[j-1:j+7,2,i-1]
-            oldey_2   = oldTraj.oldTraj[j-1:j+7,2,i-2]
-            oldepsi_1 = oldTraj.oldTraj[j-1:j+7,3,i-1]
-            oldepsi_2 = oldTraj.oldTraj[j-1:j+7,3,i-2]
-            oldv_1    = oldTraj.oldTraj[j-1:j+7,4,i-1]
-            oldv_2    = oldTraj.oldTraj[j-1:j+7,4,i-2]
+            olds    = selectedStates[1:10,1,j,i]
+            olds2    = selectedStates[11:20,1,j,i]
+            oldey   = selectedStates[1:10,2,j,i]
+            oldey2   = selectedStates[11:20,2,j,i]
+            oldepsi = selectedStates[1:10,3,j,i]
+            oldepsi2 = selectedStates[11:20,3,j,i]
+            oldv    = selectedStates[1:10,4,j,i]
+            oldv2    = selectedStates[11:20,4,j,i]
 
-            
-            
+
+           
+           
+            # olds_1    = oldTraj.oldTraj[j-1:j+7,1,i-1]
+            # olds_2    = oldTraj.oldTraj[j-1:j+7,1,i-2]
+            # oldey_1   = oldTraj.oldTraj[j-1:j+7,2,i-1]
+            # oldey_2   = oldTraj.oldTraj[j-1:j+7,2,i-2]
+            # oldepsi_1 = oldTraj.oldTraj[j-1:j+7,3,i-1]
+            # oldepsi_2 = oldTraj.oldTraj[j-1:j+7,3,i-2]
+            # oldv_1    = oldTraj.oldTraj[j-1:j+7,4,i-1]
+            # oldv_2    = oldTraj.oldTraj[j-1:j+7,4,i-2]
+
+            #println(olds)
+            #println(size(t))
 
             subplot(221)
-            plot(tN,s_pred,"or")
-            plot(t,olds_1,"b")
-            plot(t,olds_2,"g")
-            title("State S in lap $i ")
-            grid("on")
-            subplot(222)
-            plot(tN,ey_pred,"or")
-            plot(t,oldey_1,"b")
-            plot(t,oldey_2,"g")
+            plot(s_pred,ey_pred,"or")
+            plot(olds,oldey,"b")
+            plot(olds2,oldey2,"b")
             title("State ey in lap $i ")
             grid("on")
-            subplot(223)
-            plot(tN,epsi_pred,"or")
-            plot(t,oldepsi_1,"b")
-            plot(t,oldepsi_2,"g")
+
+            subplot(222)
+            plot(s_pred,epsi_pred,"or")
+            plot(olds,oldepsi,"b")
+            plot(olds2,oldepsi2,"b")
             title("State epsi in lap $i ")
             grid("on")
-            subplot(224)
-            plot(tN,v_pred,"or")
-            plot(t,oldv_1,"b")
-            plot(t,oldv_2,"g")
+
+            subplot(223)
+            plot(s_pred,v_pred,"or")
+            plot(olds,oldv,"b")
+            plot(olds2,oldv2,"b")
             title("State v in lap $i ")
             grid("on")
+
 
             sleep(5)
         end
