@@ -34,11 +34,13 @@ type OldTrajectory                  # informations about previous trajectories
     cost2target::Array{Float64}     # cost to arrive at the target, i.e. how many iterations from the start to the end of the lap
     curvature::Array{Float64}       # all the curvature calculated in each step of each lap
     oldAlpha::Array{Float64}        # all the alphas computed in each iteration of each LMPC lap
-    costLap::Array{Int64}
+    costLap::Array{Int64}           # number of iterations to complete a full lap
+    data_log::Array{Float64}        # logs all the data needed to perform the offline change of coordinates from s-ey to x-y
+    
    
     OldTrajectory(n_oldTraj = 0, oldTraj=Float64[],oldTrajXY=Float64[],oldNIter=Float64[],oldInput=Float64[],costs=Float64[],z_pred_sol=Float64[],
-                  u_pred_sol=Float64[],cost2target= Float64[],curvature=Float64[],oldAlpha=Float64[],costLap=Int64[]) =
-                 new(n_oldTraj, oldTraj,oldTrajXY,oldNIter,oldInput,costs,z_pred_sol,u_pred_sol,cost2target,curvature,oldAlpha,costLap)
+                  u_pred_sol=Float64[],cost2target= Float64[],curvature=Float64[],oldAlpha=Float64[],costLap=Int64[],data_log=Float64[]) =
+                 new(n_oldTraj, oldTraj,oldTrajXY,oldNIter,oldInput,costs,z_pred_sol,u_pred_sol,cost2target,curvature,oldAlpha,costLap,data_log)
 end
 
 type SelectedStates                 # Values needed for the convex hull formulation

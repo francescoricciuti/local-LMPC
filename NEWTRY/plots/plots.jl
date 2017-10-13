@@ -11,6 +11,7 @@ matplotlib[:style][:use]("classic") # somehow my julia version changed plotting 
 include("../helper/classes.jl")
 include("../helper/prova.jl")
 include("createBorders.jl")
+include("xyPredictions.jl")
 
 
 function eval_sim(code::AbstractString,laps=Array{Int64})
@@ -29,7 +30,7 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
 
     v_ref = mpcParams.vPathFollowing
 
-    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
+    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff,oldTraj)
 
     max_cost = findmax(oldTraj.costLap[:])[1]
 
@@ -98,7 +99,10 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
 
     v_ref = mpcParams.vPathFollowing
 
-    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
+    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff,oldTraj)
+
+
+
 
     t  = linspace(1,10,10)
     tN = linspace(1,11,11)
@@ -106,6 +110,8 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
    
 
     for i = laps
+
+        pred_sol_xy = xyPredictions(oldTraj,i,trackCoeff)
 
 
         # s_pred    = oldTraj.z_pred_sol[:,1,1,i]
@@ -125,7 +131,8 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
 
         for j = 2:2000
 
-            close("all")
+          
+            #clf()
         
         # s    = oldTraj.oldTraj[:,1,i]
         # ey   = oldTraj.oldTraj[:,2,i]
@@ -137,14 +144,18 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             epsi_pred = oldTraj.z_pred_sol[:,3,j,i]
             v_pred    = oldTraj.z_pred_sol[:,4,j,i]
 
-            olds    = selectedStates[1:20,1,j,i]
+            olds     = selectedStates[1:20,1,j,i]
             olds2    = selectedStates[21:40,1,j,i]
-            oldey   = selectedStates[1:20,2,j,i]
+            oldey    = selectedStates[1:20,2,j,i]
             oldey2   = selectedStates[21:40,2,j,i]
-            oldepsi = selectedStates[1:20,3,j,i]
+            oldepsi  = selectedStates[1:20,3,j,i]
             oldepsi2 = selectedStates[21:40,3,j,i]
-            oldv    = selectedStates[1:20,4,j,i]
+            oldv     = selectedStates[1:20,4,j,i]
             oldv2    = selectedStates[21:40,4,j,i]
+
+            x_pred  = pred_sol_xy[:,1,j]
+            y_pred  = pred_sol_xy[:,2,j]
+
 
 
            
@@ -160,11 +171,15 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
 
             #println(olds)
             #println(size(t))
-
+            
+            
+            figure(1)
+            clf()
             subplot(221)
             plot(s_pred,ey_pred,"or")
             plot(olds,oldey,"b")
             plot(olds2,oldey2,"b")
+            #ylim(findmin(oldTraj.z_pred_sol[:,2,:,i])[1],findmax(oldTraj.z_pred_sol[:,2,:,i])[1])
             title("State ey in lap $i ")
             grid("on")
 
@@ -172,6 +187,7 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             plot(s_pred,epsi_pred,"or")
             plot(olds,oldepsi,"b")
             plot(olds2,oldepsi2,"b")
+            #ylim(findmin(oldTraj.z_pred_sol[:,3,:,i])[1],findmax(oldTraj.z_pred_sol[:,3,:,i])[1])
             title("State epsi in lap $i ")
             grid("on")
 
@@ -179,11 +195,18 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             plot(s_pred,v_pred,"or")
             plot(olds,oldv,"b")
             plot(olds2,oldv2,"b")
+            ylim(findmin(oldTraj.z_pred_sol[:,4,:,i])[1],findmax(oldTraj.z_pred_sol[:,4,:,i])[1])
             title("State v in lap $i ")
             grid("on")
 
 
-            sleep(5)
+            figure(2)
+            clf()
+            plot(x_track',y_track',"g",inner_x,inner_y,"b",outer_x,outer_y,"b")
+            plot(x_pred,y_pred,"or")
+
+
+            sleep(0.2)
         end
     end
 end

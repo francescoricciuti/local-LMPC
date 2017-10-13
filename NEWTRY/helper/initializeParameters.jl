@@ -1,23 +1,23 @@
 # This file initializes all the parameters 
 
 function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,modelParams::classes.ModelParams,
-                                oldTraj::classes.OldTrajectory,mpcSol::classes.MpcSol,lapStatus::classes.LapStatus,simVariables::classes.SimulationVariables,selectedStates::classes.SelectedStates)
+                                oldTraj::classes.OldTrajectory,mpcSol::classes.MpcSol,lapStatus::classes.LapStatus,simVariables::classes.SimulationVariables,selectedStates::classes.SelectedStates,)
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 10       # number of laps we want to simulate 
+    simVariables.n_laps         = 7       # number of laps we want to simulate 
     simVariables.n_pf           = 3        # number of path following laps (must be at least 2)
     simVariables.postbuff       = 30       # number of postbuffer iteration to save
     dynModel                    = false    # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
 
     mpcParams.N                 = 10                        #lenght of prediction horizon
     mpcParams.vPathFollowing    = 0.6                       # reference velocity for the path following stage
-    mpcParams.QderivZ           = 0.1*[0,0.0,0.1,0.1]       # weights for the states in the derivative cost
+    mpcParams.QderivZ           = 0.1*[0,0.0,0.0,0.1]       # weights for the states in the derivative cost
     mpcParams.QderivU           = 0.1*[1.0,5]              # weights for the control inputs in the derivative cost
     mpcParams.R                 = 0.0*[1.0,1.0]             # weights on the control inputs
     mpcParams.Q                 = [0.0,50.0,0.1,10.0]       # weights on the states for path following
-    mpcParams.Q_cost            = 0.7                       # weight on the cost to get from a given point to the targe
-    mpcParams.Q_lane            = 0.9                       # weight on the soft constraint on the Q_lane
+    mpcParams.Q_cost            = 2*0.7                       # weight on the cost to get from a given point to the targe
+    mpcParams.Q_lane            = 1.0                      # weight on the soft constraint on the Q_lane
     mpcParams.Q_alpha           = 1.0                       # weight on the soft constraint for convex hull
 
     trackCoeff.nPolyCurvature   = 4                       # 4th order polynomial for curvature approximation
@@ -57,7 +57,9 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     oldTraj.cost2target         = zeros(buffersize,oldTraj.n_oldTraj)                    # number of iterations needed to arrive at the target
     oldTraj.curvature           = zeros(buffersize,oldTraj.n_oldTraj)                    # all the curvatures calculated in each iteration of each lap
     oldTraj.oldAlpha            = zeros(2*selectedStates.Np,buffersize,oldTraj.n_oldTraj)# all the alphas from all iterations of all LMPC laps
-    oldTraj.costLap             = zeros(oldTraj.n_oldTraj)
+    oldTraj.costLap             = zeros(oldTraj.n_oldTraj)                               # number of iterations to complete a full lap
+    oldTraj.data_log            = zeros(trackCoeff.nPolyXY +1,trackCoeff.nPolyXY +1,buffersize,oldTraj.n_oldTraj)# logs all the data needed to perform the offline change of coordinates from s-ey to x-y
+
 
 
     mpcSol.u                    = zeros(mpcParams.N,2)              # array containing all the control inputs computed by the MPC at a given iteration

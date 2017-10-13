@@ -39,7 +39,7 @@ end
 
 function solveLearning_MPC(m::initLearningModel,mpcSol::classes.MpcSol,mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,modelParams::classes.ModelParams,zCurr::Array{Float64},uCurr::Array{Float64},selectedStates::classes.SelectedStates)
 
-    println("FLAG LMPC")
+    
  
     coeffCurvature  = trackCoeff.coeffCurvature::Array{Float64,1}
     selStates       = selectedStates.selStates::Array{Float64,2}

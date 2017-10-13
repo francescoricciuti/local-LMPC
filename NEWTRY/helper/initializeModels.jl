@@ -238,12 +238,12 @@ type initLearningModel
         @NLparameter(mdl, selStates[1:2*Np,1:4] == 0)                                 # states from the previous trajectories selected in "convhullStates"
         @NLparameter(mdl, statesCost[1:2*Np] == 0)                                    # costs of the states selected in "convhullStates"
         @NLparameter(mdl, z0[i=1:4] == z_Init[1,i])                                   # initial conditions for the states
-        @NLconstraint(mdl, [i=1:4], z_Ol[1,i] == z0[i])                               # set initial conditions
         @NLparameter(mdl, coeff[i=1:n_poly_curv+1] == trackCoeff.coeffCurvature[i])   # coefficients for the curvature
         @NLparameter(mdl, uCurr[i=1:2] == 0) 
                                                # initial conditions for the control actions
 
 
+        @NLconstraint(mdl, [i=1:4], z_Ol[1,i] == z0[i])                               # set initial conditions
         @NLconstraint(mdl, sum{alpha[i],i=1:2*Np} == 1)    # constraint on the coefficients of the convex hull
         for i = 1:4
             @NLconstraint(mdl,z_Ol[N+1,i] == sum{alpha[j]*selStates[j,i],j=1:2*Np})

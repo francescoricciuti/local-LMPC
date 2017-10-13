@@ -1,6 +1,6 @@
 # This file performs the change of coordinates between x-y frame and s_ey frame
 
-function trackFrameConversion(states_x::Array{Float64},x_track::Array{Float64},y_track::Array{Float64},trackCoeff::classes.TrackCoeff, itercount::Int64)
+function trackFrameConversion(states_x::Array{Float64},x_track::Array{Float64},y_track::Array{Float64},trackCoeff::classes.TrackCoeff, itercount::Int64,oldTraj::classes.OldTrajectory,lap::Int64,save_data::Bool)
 
     OrderXY        = trackCoeff.nPolyXY
     OrderThetaCurv = trackCoeff.nPolyCurvature
@@ -276,6 +276,11 @@ function trackFrameConversion(states_x::Array{Float64},x_track::Array{Float64},y
         # println("j= ",(s_nearest-ds):discretization:(s_nearest+ds))
     end
     # #endT
+
+    if save_data==true
+        oldTraj.data_log[:,1,itercount,lap] = coeffX
+        oldTraj.data_log[:,2,itercount,lap] = coeffY
+    end
 
     zCurr_s = zeros(4)
     v_abs = sqrt(states_x[3].^2 + states_x[4].^2)
