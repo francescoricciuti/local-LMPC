@@ -107,6 +107,8 @@ zCurr_x[1,6]   = z_Init[6]
 
 for j=1:n_laps                 # main loop over all laps
 
+    #println("FLAG 1")
+
     no_solution_found = 0      #counts number of unsuccesful attempts. If too many unsuccesful attempts, the lap will be terminated
 
     lapStatus.currentLap = j   # keep track of the current lap updating the value in lapStatus
@@ -128,7 +130,8 @@ for j=1:n_laps                 # main loop over all laps
    while i<=length(t)-1 && !finished    # as long as we have not reached the maximal iteration time for one round or ended the round
    #for indice=1:10
         tic()  # tic for iteration time calculation (tt_it)
-        #println("zCurr_x($i )=",zCurr_x[i,:])
+        
+        #println("FLAG 2")
 
         if j > 1
             if i == (postbuff+2)
@@ -171,6 +174,8 @@ for j=1:n_laps                 # main loop over all laps
 
         #### Solve the MPC problem
 
+        #println("FLAG 3")
+
         n_pf = simVariables.n_pf  # number of path following laps
 
         tic() # tic for learning MPC time calculations (tt)
@@ -181,18 +186,19 @@ for j=1:n_laps                 # main loop over all laps
 ###########################################################################################################################################
         elseif j > n_pf    # if we have already completed all the path following laps, compute the states needed for the convex hull and solve the LMPC
 
-
+            #println("FLAG4")
             convhullStates(oldTraj, posInfo, mpcParams,lapStatus, selectedStates)
             solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
 
-            # if j>5
-            # println("zCurr_s[$i,:]= ",zCurr_s[i,:])
-            # println("Selected states at it $i= ",selectedStates.selStates)
-            # println("Costs of states at it $i= ",selectedStates.statesCost)
-            # println("predicted trajectory at it $i= ",mpcSol.z)
-            # println("alphas at it $i= ",mpcSol.alpha)
-            # println("sum of all the alphas= ",sum(mpcSol.alpha))
-            # end
+            if j>8
+                println("zCurr_x[$i,:]= ",zCurr_x[i,:])
+                println("zCurr_s[$i,:]= ",zCurr_s[i,:])
+                println("Selected states at it $i= ",selectedStates.selStates)
+                println("Costs of states at it $i= ",selectedStates.statesCost)
+                println("predicted trajectory at it $i= ",mpcSol.z)
+                println("alphas at it $i= ",mpcSol.alpha)
+                println("sum of all the alphas= ",sum(mpcSol.alpha))
+            end
 
             alpha_log[:,i,j] = mpcSol.alpha # save the coefficients for convex hull computed in iteration i of lap j
         

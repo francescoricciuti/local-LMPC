@@ -10,10 +10,10 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     simVariables.postbuff       = 30       # number of postbuffer iteration to save
     dynModel                    = false    # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
 
-    mpcParams.N                 = 17                        #lenght of prediction horizon
+    mpcParams.N                 = 10                        #lenght of prediction horizon
     mpcParams.vPathFollowing    = 0.6                       # reference velocity for the path following stage
     mpcParams.QderivZ           = 0.1*[0,0.0,0.1,0.1]       # weights for the states in the derivative cost
-    mpcParams.QderivU           = 0.1*[1.0,10]              # weights for the control inputs in the derivative cost
+    mpcParams.QderivU           = 0.1*[1.0,5]              # weights for the control inputs in the derivative cost
     mpcParams.R                 = 0.0*[1.0,1.0]             # weights on the control inputs
     mpcParams.Q                 = [0.0,50.0,0.1,10.0]       # weights on the states for path following
     mpcParams.Q_cost            = 0.7                       # weight on the cost to get from a given point to the targe
@@ -30,7 +30,7 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     modelParams.l_B             = 0.125 
     modelParams.dt              = 0.1
     modelParams.u_lb            = ones(mpcParams.N,1) * [-0.6  -pi/4]  #-0.6 for braking    # lower bounds on control actions
-    modelParams.u_ub            = ones(mpcParams.N,1) * [ 1.2   pi/4]       #1.2           # upper bounds on control actions
+    modelParams.u_ub            = ones(mpcParams.N,1) * [ 0.5   pi/4]       #1.2           # upper bounds on control actions
     modelParams.z_lb            = ones(mpcParams.N+1,1) * [-Inf -Inf -Inf  0]           # lower bounds on states
     modelParams.z_ub            = ones(mpcParams.N+1,1) * [ Inf  Inf  Inf  1.5]            # upper bounds on states
     modelParams.v_max           = 2.0                                                      # maxium velocity for trajectory tracking

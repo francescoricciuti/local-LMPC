@@ -47,7 +47,7 @@ function saveOldTraj(oldTraj,cost_log::Array{Float64},zCurr::Array{Float64}, zCu
     oldTraj.cost2target[:,currentLap]                  = cost2target
     oldTraj.curvature[:,currentLap]                    = curvature_curr
     oldTraj.oldAlpha[:,:,currentLap]                   = alpha_log[:,:,currentLap]
-    oldTraj.costLap[currentLap]                        = costLap            
+    oldTraj.costLap[currentLap]                        = convert(Int64,costLap)            
        
     
 end

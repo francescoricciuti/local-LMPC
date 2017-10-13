@@ -39,6 +39,8 @@ end
 
 function solveLearning_MPC(m::initLearningModel,mpcSol::classes.MpcSol,mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,modelParams::classes.ModelParams,zCurr::Array{Float64},uCurr::Array{Float64},selectedStates::classes.SelectedStates)
 
+    println("FLAG LMPC")
+ 
     coeffCurvature  = trackCoeff.coeffCurvature::Array{Float64,1}
     selStates       = selectedStates.selStates::Array{Float64,2}
     statesCost      = selectedStates.statesCost::Array{Float64,1}
@@ -48,6 +50,7 @@ function solveLearning_MPC(m::initLearningModel,mpcSol::classes.MpcSol,mpcParams
     # Set values needed by the MPC
 
     setvalue(m.z0,zCurr)
+    println("value of Zcurr inside solveMPC= ",zCurr)
     setvalue(m.coeff,coeffCurvature)
     setvalue(m.uCurr,uCurr)
     setvalue(m.selStates,selStates)
