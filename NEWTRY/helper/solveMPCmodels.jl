@@ -50,7 +50,6 @@ function solveLearning_MPC(m::initLearningModel,mpcSol::classes.MpcSol,mpcParams
     # Set values needed by the MPC
 
     setvalue(m.z0,zCurr)
-    println("value of Zcurr inside solveMPC= ",zCurr)
     setvalue(m.coeff,coeffCurvature)
     setvalue(m.uCurr,uCurr)
     setvalue(m.selStates,selStates)

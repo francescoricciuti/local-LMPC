@@ -250,8 +250,8 @@ type initLearningModel
             #@NLconstraint(mdl,z_Ol[N+1,i] >= sum{alpha[j]*selStates[j,i],j=1:2*Np}-eps_alpha[i])  # terminal constraint are implemented as soft constraints
             #@NLconstraint(mdl,z_Ol[N+1,i] <= sum{alpha[j]*selStates[j,i],j=1:2*Np}+eps_alpha[i])  #  terminal constraint are implemented as soft constraints
         end     
-        @NLconstraint(mdl, [i=1:N+1], z_Ol[i,2] <= ey_max + eps_lane[i])   # lane constraint are implemented as soft constraints 
-        @NLconstraint(mdl, [i=1:N+1], z_Ol[i,2] >= -ey_max - eps_lane[i])  # lane constraint are implemented as soft constraints 
+        @NLconstraint(mdl, [i=2:N+1], z_Ol[i,2] <= ey_max + eps_lane[i])   # lane constraint are implemented as soft constraints 
+        @NLconstraint(mdl, [i=2:N+1], z_Ol[i,2] >= -ey_max - eps_lane[i])  # lane constraint are implemented as soft constraints 
 
 
         
@@ -284,7 +284,7 @@ type initLearningModel
 
         # Lane cost (soft)
         # ---------------------------------
-        @NLexpression(mdl, laneCost, Q_lane*sum{10.0*eps_lane[i]+100.0*eps_lane[i]^2 ,i=1:2})
+        @NLexpression(mdl, laneCost, Q_lane*sum{10.0*eps_lane[i]+100.0*eps_lane[i]^2 ,i=2:N+1})
 
         # Terminal Cost
         # ---------------------------------
@@ -293,7 +293,7 @@ type initLearningModel
         # Overall Cost function (objective of the minimization)
         # -----------------------------------------------------
 
-        @NLobjective(mdl, Min, derivCost + laneCost + controlCost + terminalCost )#+ slackCost)
+        @NLobjective(mdl, Min, derivCost + laneCost + controlCost + terminalCost)# + slackCost)
 
         #### Update model values
 
