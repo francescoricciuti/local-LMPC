@@ -61,9 +61,10 @@ type MpcParams                     # parameters for MPC
     Q_cost::Float64                # weight on the cost to get from a given point to the target
     Q_lane::Float64                # weight on the soft constraint for the lane
     Q_alpha::Float64               # weight on the soft constraint for the convex hull
+    Q_vel::Float64                 # weight on the soft constraint for the maximum velocity
 
-    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0) = 
-    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha)
+    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0,Q_vel=0) = 
+    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha,Q_vel)
 end
 
 type PosInfo            # current position information

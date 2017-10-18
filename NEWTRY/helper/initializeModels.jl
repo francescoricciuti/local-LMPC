@@ -155,6 +155,7 @@ type initLearningModel
 
     eps_lane::Array{JuMP.Variable,1}
     eps_alpha::Array{JuMP.Variable,1}
+    eps_vel::Array{JuMP.Variable,1}
     alpha::Array{JuMP.Variable,1}
     z_Ol::Array{JuMP.Variable,2}
     u_Ol::Array{JuMP.Variable,2}
@@ -169,6 +170,7 @@ type initLearningModel
     slackCost::JuMP.NonlinearExpression
     laneCost::JuMP.NonlinearExpression
     terminalCost::JuMP.NonlinearExpression
+    velocityCost::JuMP.NonlinearExpression
 
     function initLearningModel(mpcParams::classes.MpcParams,modelParams::classes.ModelParams,trackCoeff::classes.TrackCoeff,selectedStates::classes.SelectedStates)
 
@@ -197,6 +199,7 @@ type initLearningModel
         Q          = mpcParams.Q::Array{Float64,1}         # weights on the states for path following
         Q_lane     = mpcParams.Q_lane::Float64             # weight on the soft constraint on the lane
         Q_alpha    = mpcParams.Q_alpha::Float64            # weight on the soft constraint for the convex hull
+        Q_vel      = mpcParams.Q_vel::Float64              # weight on the soft constraint for the max velocity
 
       
         Np         = selectedStates.Np::Int64              # how many states to select
@@ -219,6 +222,7 @@ type initLearningModel
         @variable(mdl, alpha[1:2*Np] >= 0)     # coefficients of the convex hull
         @variable(mdl, eps_lane[1:N+1] >= 0)   # eps for soft lane constraints
         @variable(mdl, eps_alpha[1:4] >=0)     # eps for soft constraint on alpha
+        @variable(mdl, eps_vel[1:N+1]>=0)      # eps for soft constraint on velocity
 
 
         for i=1:2
@@ -239,10 +243,11 @@ type initLearningModel
         @NLparameter(mdl, statesCost[1:2*Np] == 0)                                    # costs of the states selected in "convhullStates"
         @NLparameter(mdl, z0[i=1:4] == z_Init[1,i])                                   # initial conditions for the states
         @NLparameter(mdl, coeff[i=1:n_poly_curv+1] == trackCoeff.coeffCurvature[i])   # coefficients for the curvature
-        @NLparameter(mdl, uCurr[i=1:2] == 0) 
-                                               # initial conditions for the control actions
+        @NLparameter(mdl, uCurr[i=1:2] == 0)                                          # initial conditions for the control actions
 
 
+
+        @NLconstraint(mdl,[i = 1:(N+1)], z_Ol[i,4] <= v_max + eps_vel[i] )               # sof constraint on maximum velocity
         @NLconstraint(mdl, [i=1:4], z_Ol[1,i] == z0[i])                               # set initial conditions
         @NLconstraint(mdl, sum{alpha[i],i=1:2*Np} == 1)    # constraint on the coefficients of the convex hull
         for i = 1:4
@@ -290,10 +295,14 @@ type initLearningModel
         # ---------------------------------
         @NLexpression(mdl, terminalCost , sum{alpha[i]*statesCost[i], i=1:2*Np})
 
+        # Velocity Cost
+        #----------------------------------
+        @NLexpression(mdl, velocityCost , Q_vel*sum{10.0*eps_vel[i]+100.0*eps_vel[i]^2 ,i=2:N+1})
+
         # Overall Cost function (objective of the minimization)
         # -----------------------------------------------------
 
-        @NLobjective(mdl, Min, derivCost + laneCost + controlCost + terminalCost)# + slackCost)
+        @NLobjective(mdl, Min, derivCost + laneCost + controlCost + terminalCost + velocityCost)# + slackCost)
 
         #### Update model values
 
@@ -308,6 +317,7 @@ type initLearningModel
         m.laneCost    = laneCost    # lane cost
         m.slackCost   = slackCost   # cost on alpha
         m.terminalCost= terminalCost# terminal cost
+        m.velocityCost= velocityCost#velocity cost
         m.selStates   = selStates   # selected states
         m.statesCost  = statesCost  # cost of the selected states
         m.alpha       = alpha       # parameters of the convex hull

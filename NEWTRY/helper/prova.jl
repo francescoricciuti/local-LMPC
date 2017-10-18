@@ -10,6 +10,8 @@ function trackFrameConversion(states_x::Array{Float64},x_track::Array{Float64},y
     y              = states_x[2]
     psi            = states_x[5]
 
+    #x_track[1,size(x_track)[2]] = x_track[1,size(x_track)[2]-1]
+
 
     nodes          = [x_track; y_track]
     n_nodes        = size(x_track)[2]

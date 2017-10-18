@@ -188,7 +188,7 @@ for j=1:n_laps                 # main loop over all laps
             convhullStates(oldTraj, posInfo, mpcParams,lapStatus, selectedStates)
             solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
 
-            # if j>5
+            # if j>9
             #     println("zCurr_x[$i,:]= ",zCurr_x[i,:])
             #     println("zCurr_s[$i,:]= ",zCurr_s[i,:])
             #     println("Selected states at it $i= ",selectedStates.selStates)
