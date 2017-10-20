@@ -37,19 +37,38 @@ end
 
 
 
-function solveLearning_MPC(m::initLearningModel,mpcSol::classes.MpcSol,mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,modelParams::classes.ModelParams,zCurr::Array{Float64},uCurr::Array{Float64},selectedStates::classes.SelectedStates)
+function solveLearning_MPC(m::initLearningModel,mpcSol::classes.MpcSol,mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,
+                           modelParams::classes.ModelParams,zCurr::Array{Float64},uCurr::Array{Float64},selectedStates::classes.SelectedStates,obs_curr::Array{Float64})
 
     
  
     coeffCurvature  = trackCoeff.coeffCurvature::Array{Float64,1}
     selStates       = selectedStates.selStates::Array{Float64,2}
     statesCost      = selectedStates.statesCost::Array{Float64,1}
+    Q_obs           = mpcParams.Q_obs::Array{Float64,1}
+    Obs_act         = mpcParams.Obs_act::Int64
+    obs             = obs_curr[:,:]::Array{Float64,2}
+    N               = mpcParams.N
+    dt              = modelParams.dt
+
+    obs_pred        = zeros(N+1,3)
+    obs_pred[1,:]   = obs
+    for i =2:N+1
+        obs_pred[i,1] = obs[1,1] + i*dt*obs[1,3]
+    end
+    obs_pred[i=2:N+1,2] = obs[1,2]
+    obs_pred[i=2:N+1,3] = obs[1,3]
+
     sol_u::Array{Float64,2}    # where all the optimal control actions will be saved
     sol_z::Array{Float64,2}    # where all the optimal states will be saved
+
 
     # Set values needed by the MPC
 
     setvalue(m.z0,zCurr)
+    setvalue(m.Q_obs,Q_obs)
+    setvalue(m.Obs_act,Obs_act)
+    setvalue(m.obs,obs_pred)
     setvalue(m.coeff,coeffCurvature)
     setvalue(m.uCurr,uCurr)
     setvalue(m.selStates,selStates)

@@ -5,8 +5,8 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 7       # number of laps we want to simulate 
-    simVariables.n_pf           = 2        # number of path following laps (must be at least Nl)
+    simVariables.n_laps         = 7      # number of laps we want to simulate 
+    simVariables.n_pf           = 2       # number of path following laps (must be at least Nl)
     simVariables.postbuff       = 40       # number of postbuffer iteration to save
     dynModel                    = true    # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
 
@@ -28,7 +28,9 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     mpcParams.Q_lane            = 1.0                        # weight on the soft constraint on the Q_lane
     mpcParams.Q_alpha           = 1.0                        # weight on the soft constraint for convex hull
     mpcParams.Q_vel             = 1.0                        # weight on the soft constraint fot the max velocity
-    mpcParams.Q_obs             = ones(Nl*selectedStates.Np)# weight to esclude some of the old trajectories
+    mpcParams.Q_obs             = ones(Nl*selectedStates.Np) # weight to esclude some of the old trajectories
+    mpcParams.Q_ell             = [0.01,0.01,0.24]
+    mpcParams.Obs_act           = 0
 
     trackCoeff.nPolyCurvature   = 4                       # 4th order polynomial for curvature approximation
     trackCoeff.nPolyXY          = 6 
@@ -39,9 +41,9 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     modelParams.l_A             = 0.125
     modelParams.l_B             = 0.125 
     modelParams.dt              = 0.1
-    modelParams.u_lb            = ones(mpcParams.N,1) * [-0.6  -pi/3]  #-0.6 for braking    # lower bounds on control actions
+    modelParams.u_lb            = ones(mpcParams.N,1) * [-0.6  -pi/3]  #-0.6 for braking   # lower bounds on control actions
     modelParams.u_ub            = ones(mpcParams.N,1) * [ 0.6   pi/3]       #1.2           # upper bounds on control actions
-    modelParams.z_lb            = ones(mpcParams.N+1,1) * [-Inf -Inf -Inf  0]           # lower bounds on states
+    modelParams.z_lb            = ones(mpcParams.N+1,1) * [-Inf -Inf -Inf  0]              # lower bounds on states
     modelParams.z_ub            = ones(mpcParams.N+1,1) * [ Inf  Inf  Inf  Inf]            # upper bounds on states
     modelParams.v_max           = 2.5                                                      # maxium velocity for trajectory tracking
     modelParams.max_alpha       = 10                                                       # maximum slip angle 
@@ -78,10 +80,11 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
 
     obstacle.n_obs              = 1         # number of Obstacles in the track
     obstacle.s_obs_init         = [10]      # initial s of each obstacle
-    obstacle.ey_obs_init        = [-0.5]    # initial ey of each obstacle
+    obstacle.ey_obs_init        = [-0.8]     # initial ey of each obstacle
     obstacle.v_obs_init         = [0]       # initial velocity of each obstacle
-    obstacle.rs                 = 2         # radius on the s coordinate of the ellipse describing the obstacle
-    obstacle.rey                = 1         # radius on the ey coordinate of the ellipse describing the obstacle
+    obstacle.rs                 = 0.4         # radius on the s coordinate of the ellipse describing the obstacle
+    obstacle.rey                = 0.2       # radius on the ey coordinate of the ellipse describing the obstacle
+    obstacle.distMax            = modelParams.v_max*modelParams.dt  # maximum distance at which we can detect obstacles
 
     
 end

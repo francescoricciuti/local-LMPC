@@ -69,7 +69,8 @@ s_target   = posInfo.s_target                 # position of the target
 dynModel   = simVariables.dynModel            # boolean variable telling the simulator which model to use
 Nl         = selectedStates.Nl                # number of laps to consider for the convex hull
 n_obs      = obstacle.n_obs                   # number of obstacles
-n_learn_laps=selectedStates.n_learn_laps
+n_learn_laps=selectedStates.n_learn_laps      # number of learning laps to include in the safe set for obstacle avoidance
+distMax    = obstacle.distMax                 # maximum distance at which we can detect obstacles
 
 
 #### Initialize Models
@@ -103,6 +104,7 @@ obs_curr       = zeros(length(t),3,n_obs)                        # obstacle stat
 obs_final      = zeros(1,3,n_obs)                                # states of the obstacles at the end of the current iteration
 
 # set the initial conditions as zCurr_x to initialize first iteration of first lap
+
 zCurr_x[1,1]   = z_Init[1]  
 zCurr_x[1,2]   = z_Init[2] 
 zCurr_x[1,3]   = z_Init[3]
@@ -150,6 +152,9 @@ for j=1:n_laps                 # main loop over all laps
    while i<=length(t)-1 && !finished    # as long as we have not reached the maximal iteration time for one round or ended the round
    #for indice=1:10
         tic()  # tic for iteration time calculation (tt_it)
+
+        mpcParams.Q_obs   = ones(Nl*selectedStates.Np) 
+        mpcParams.Obs_act = 0 
         
 
         if j > 1
@@ -193,6 +198,19 @@ for j=1:n_laps                 # main loop over all laps
 
         #### Solve the MPC problem
 
+        # check nearest obstacles
+        dist = obs_curr[i,1,:] - posInfo.s        # calculate distance to every obstacle
+
+        index_obs = find(0.<= dist.<=distMax)     # take only distances >0 and in the range we can detect
+
+        println(size(index_obs))
+        if size(index_obs)[1] == 0
+            index_min = 1
+        else
+            index_min = findmin(dist[index_obs])[2]   # find the nearest among the obstacles
+            mpcParams.Obs_act = 1
+        end
+
 
         n_pf = simVariables.n_pf  # number of path following laps
 
@@ -205,7 +223,7 @@ for j=1:n_laps                 # main loop over all laps
         elseif j > n_pf    # if we have already completed all the path following laps, compute the states needed for the convex hull and solve the LMPC
 
             convhullStates(oldTraj, posInfo, mpcParams,lapStatus, selectedStates,obs_curr[i,:,:],modelParams,obstacle,simVariables)
-            solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
+            solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates,obs_curr[i,:,index_min])
 
             alpha_log[:,i,j] = mpcSol.alpha # save the coefficients for convex hull computed in iteration i of lap j
 

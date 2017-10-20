@@ -151,6 +151,9 @@ type initLearningModel
     coeff::Array{JuMP.NonlinearParameter,1}
     selStates::Array{JuMP.NonlinearParameter,2}
     statesCost::Array{JuMP.NonlinearParameter,1}
+    Q_obs::Array{JuMP.NonlinearParameter,1}
+    obs::Array{JuMP.NonlinearParameter,2}
+    Obs_act::JuMP.NonlinearParameter
 
 
     eps_lane::Array{JuMP.Variable,1}
@@ -171,6 +174,8 @@ type initLearningModel
     laneCost::JuMP.NonlinearExpression
     terminalCost::JuMP.NonlinearExpression
     velocityCost::JuMP.NonlinearExpression
+    obstacleCost1::JuMP.NonlinearExpression
+    obstacleCost2::JuMP.NonlinearExpression
 
     function initLearningModel(mpcParams::classes.MpcParams,modelParams::classes.ModelParams,trackCoeff::classes.TrackCoeff,selectedStates::classes.SelectedStates)
 
@@ -200,7 +205,10 @@ type initLearningModel
         Q_lane     = mpcParams.Q_lane::Float64             # weight on the soft constraint on the lane
         Q_alpha    = mpcParams.Q_alpha::Float64            # weight on the soft constraint for the convex hull
         Q_vel      = mpcParams.Q_vel::Float64              # weight on the soft constraint for the max velocity
-        Q_obs      = mpcParams.Q_obs::Array{Float64}       # weight to esclude some states of the old trajectories
+        Q_ell      = mpcParams.Q_ell::Array{Float64}       # weight to create the ellipse in the obstacle cost
+
+        rs         = obstacle.rs
+        rey        = obstacle.rey
 
       
         Np         = selectedStates.Np::Int64              # how many states to select
@@ -213,6 +221,8 @@ type initLearningModel
 
         z_Init          = zeros(N+1,4)
         z_Init[:,4]     = v_ref*ones(N+1)
+
+        
 
 
         #### Defining model, variables and constraints
@@ -241,14 +251,15 @@ type initLearningModel
         end
 
 
-        @NLparameter(mdl, selStates[1:Nl*Np,1:4] == 0)                                 # states from the previous trajectories selected in "convhullStates"
-        @NLparameter(mdl, statesCost[1:Nl*Np] == 0)                                    # costs of the states selected in "convhullStates"
+        @NLparameter(mdl, selStates[1:Nl*Np,1:4] == 0)                                # states from the previous trajectories selected in "convhullStates"
+        @NLparameter(mdl, statesCost[1:Nl*Np] == 0)                                   # costs of the states selected in "convhullStates"
         @NLparameter(mdl, z0[i=1:4] == z_Init[1,i])                                   # initial conditions for the states
         @NLparameter(mdl, coeff[i=1:n_poly_curv+1] == trackCoeff.coeffCurvature[i])   # coefficients for the curvature
         @NLparameter(mdl, uCurr[i=1:2] == 0)                                          # initial conditions for the control actions
-
-
-
+        @NLparameter(mdl, Q_obs[i=1:Nl*Np] == mpcParams.Q_obs[i])                     # weight used to exclude some states from the convex hull
+        @NLparameter(mdl, Obs_act == 0)
+        @NLparameter(mdl, obs[i=1:N+1,j=1:3] == 0)                                    # initialize obstacle position
+ 
         @NLconstraint(mdl,[i = 1:(N+1)], z_Ol[i,4] <= v_max + eps_vel[i] )               # sof constraint on maximum velocity
         @NLconstraint(mdl, [i=1:4], z_Ol[1,i] == z0[i])                               # set initial conditions
         @NLconstraint(mdl, sum{alpha[i],i=1:Nl*Np} == 1)    # constraint on the coefficients of the convex hull
@@ -301,15 +312,27 @@ type initLearningModel
         #----------------------------------
         @NLexpression(mdl, velocityCost , Q_vel*sum{10.0*eps_vel[i]+100.0*eps_vel[i]^2 ,i=2:N+1})
 
+        # Obstacle Cost 1
+        #----------------------------------
+        @NLexpression(mdl, obstacleCost1, Obs_act*sum{((N+1.2+0.2*i)/(N+1))*(Q_ell[1]/(Q_ell[2]+(Q_ell[3]*(((z_Ol[i,1]-obs[i,1])/rs)^2+((z_Ol[i,2]-obs[i,2])/rey)^2-1))^4 )),i=1:N+1})
+
+        # Obstacle Cost 2
+        #----------------------------------
+        @NLexpression(mdl, obstacleCost2, Obs_act*sum{((N+1.2+0.2*i)/(N+1))*(Q_ell[1]/(Q_ell[2]+(0.6*(((z_Ol[i,1]-obs[i,1])/rs)^2+((z_Ol[i,2]-obs[i,2])/rey)^2)))),i=1:N+1})
+        
+
         # Overall Cost function (objective of the minimization)
         # -----------------------------------------------------
 
-        @NLobjective(mdl, Min, derivCost + laneCost + controlCost + terminalCost + velocityCost)# + slackCost)
+        @NLobjective(mdl, Min, derivCost + laneCost + controlCost + terminalCost + velocityCost + obstacleCost1 + obstacleCost2)# + slackCost)
 
         #### Update model values
 
         m.mdl         = mdl
         m.coeff       = coeff       # curvature coefficients
+        m.Q_obs       = Q_obs       # weight to exclude states 
+        m.obs         = obs         # obstacle
+        m.Obs_act     = Obs_act
         m.u_Ol        = u_Ol        # control inputs
         m.z_Ol        = z_Ol        # states
         m.uCurr       = uCurr       # initial conditions for the input

@@ -29,8 +29,9 @@ type Obstacle
     v_obs_init::Array{Float64}      # initial velocity of each obstacle
     rs::Float64                     # radius of the ellipse describing the obsatcle on the s coordinate
     rey::Float64                    # radius of the ellipse describing the obstacle on the ey coordinate
+    distMax::Float64                # maximum distance at which we can detect Obstacles
 
-    Obstacle(n_obs=1,s_obs_init=Float64[],ey_obs_init=Float64[],v_obs_init=Float64[],rs=1.0,rey=1.0) = new(n_obs,s_obs_init,ey_obs_init,v_obs_init,rs,rey)
+    Obstacle(n_obs=1,s_obs_init=Float64[],ey_obs_init=Float64[],v_obs_init=Float64[],rs=1.0,rey=1.0,distMax=1.0) = new(n_obs,s_obs_init,ey_obs_init,v_obs_init,rs,rey,distMax)
 
 end       
 
@@ -79,9 +80,11 @@ type MpcParams                     # parameters for MPC
     Q_alpha::Float64               # weight on the soft constraint for the convex hull
     Q_vel::Float64                 # weight on the soft constraint for the maximum velocity
     Q_obs::Array{Float64}          # weight used to esclude some of the old trajectories from the optimization problem
-
-    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0,Q_vel=0,Q_obs=Float64[]) = 
-    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha,Q_vel,Q_obs)
+    Q_ell::Array{Float64}      
+    Obs_act::Int64
+  
+    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0,Q_vel=0,Q_obs=Float64[],Q_ell=Float64[],Obs_act=0) = 
+    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha,Q_vel,Q_obs,Q_ell,Obs_act)
 end
 
 type PosInfo            # current position information
