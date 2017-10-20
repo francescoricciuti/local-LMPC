@@ -21,6 +21,19 @@ type SimulationVariables
 
 end
 
+type Obstacle
+
+    n_obs::Int64                    # number of Obstacles in the track
+    s_obs_init::Array{Float64}      # initial s of each obstacle
+    ey_obs_init::Array{Float64}     # initial ey of each obstacle
+    v_obs_init::Array{Float64}      # initial velocity of each obstacle
+    rs::Float64                     # radius of the ellipse describing the obsatcle on the s coordinate
+    rey::Float64                    # radius of the ellipse describing the obstacle on the ey coordinate
+
+    Obstacle(n_obs=1,s_obs_init=Float64[],ey_obs_init=Float64[],v_obs_init=Float64[],rs=1.0,rey=1.0) = new(n_obs,s_obs_init,ey_obs_init,v_obs_init,rs,rey)
+
+end       
+
 
 type OldTrajectory                  # informations about previous trajectories
     n_oldTraj::Int64                # number of Old Trajectories
@@ -47,7 +60,10 @@ type SelectedStates                 # Values needed for the convex hull formulat
     selStates::Array{Float64}       # selected states from previous laps ...
     statesCost::Array{Float64}      # ... and their related costs
     Np::Int64                       # number of states to select from each previous lap
-    SelectedStates(selStates=Float64[],statesCost=Float64[],Np=6) = new(selStates,statesCost,Np)
+    Nl::Int64                       # number of laps to select for the convex hull
+    n_learn_laps::Int64             # number of learning laps to include in the safe set for obstacle avoidance
+
+    SelectedStates(selStates=Float64[],statesCost=Float64[],Np=6,Nl=2,n_learn_laps=2) = new(selStates,statesCost,Np,Nl,n_learn_laps)
 end
 
 
@@ -62,9 +78,10 @@ type MpcParams                     # parameters for MPC
     Q_lane::Float64                # weight on the soft constraint for the lane
     Q_alpha::Float64               # weight on the soft constraint for the convex hull
     Q_vel::Float64                 # weight on the soft constraint for the maximum velocity
+    Q_obs::Array{Float64}          # weight used to esclude some of the old trajectories from the optimization problem
 
-    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0,Q_vel=0) = 
-    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha,Q_vel)
+    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0,Q_vel=0,Q_obs=Float64[]) = 
+    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha,Q_vel,Q_obs)
 end
 
 type PosInfo            # current position information

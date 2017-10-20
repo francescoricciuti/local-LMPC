@@ -27,6 +27,7 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
     mpcParams = Data["mpcParams"]
     buffersize = Data["buffersize"]
     oldTraj     = Data["oldTraj"]
+    obs_log =Data["obstacle"]
 
     v_ref = mpcParams.vPathFollowing
 
@@ -51,6 +52,13 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
         axis("equal")
         grid("on")
         title("X-Y view of Lap $i")
+
+        figure()
+        plot(x,y,"g")
+        plot(x_track',y_track',"r",inner_x,inner_y,"b",outer_x,outer_y,"b")
+        axis("equal")
+        grid("on")
+        title("position obstacle lap $i")
 
         #println("x= ",x)
         #println("y= ",y)
