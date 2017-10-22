@@ -36,6 +36,7 @@ mpcSol            = classes.MpcSol()
 trackCoeff        = classes.TrackCoeff()
 modelParams       = classes.ModelParams()
 simVariables      = classes.SimulationVariables()
+obstacle          = classes.Obstacle()
 
 
 #### Initialize states 
@@ -50,7 +51,7 @@ z_Init[6] = 0                  #psi_dot
 
 #### Initialize parameters
 
-InitializeParameters(mpcParams,trackCoeff,modelParams,oldTraj,mpcSol,lapStatus,simVariables,selectedStates)
+InitializeParameters(mpcParams,trackCoeff,modelParams,oldTraj,mpcSol,lapStatus,simVariables,selectedStates,obstacle)
 
 #### Calculate position of s_target
 
@@ -64,37 +65,45 @@ t          = collect(0:dt:(buffersize-1)*dt)  # time array
 postbuff   = simVariables.postbuff            # number of postbuff iteration to save after end of lap
 s_target   = posInfo.s_target                 # position of the target
 dynModel   = simVariables.dynModel            # boolean variable telling the simulator which model to use
-
+Nl         = selectedStates.Nl                # number of previous laps to consider in the convex hull
+n_obs      = obstacle.n_obs                   # number of obstacles in the track
+obs_detect = obstacle.obs_detect              # maximum distance at which we can detect obstacles
 
 #### Initialize Models
 
 println("Initialize Model........")
 mdl_Path = initPathFollowingModel(mpcParams,modelParams,trackCoeff)
 mdl_LMPC = initLearningModel(mpcParams,modelParams,trackCoeff,selectedStates)
+mdl_obs_LMPC=initObsModel()
 
 
 
 #### Create log variables (needed for later plotting)
 
-selStates_log  = zeros(2*selectedStates.Np,4,length(t),n_laps)  #array to log the selected states in every iteration of every lap
-statesCost_log = zeros(2*selectedStates.Np,length(t),n_laps)    #array to log the selected states' costs in every iteration of every lap
-z_pred_log     = zeros(mpcParams.N+1,4,length(t),n_laps)        #array to log the predicted states for all time steps for later plotting
-u_pred_log     = zeros(mpcParams.N,2,length(t),n_laps)          #array to log the predicted inputs for all time steps for later plotting
-cost_log       = zeros(5,length(t),n_laps)                      #logs the MPC costs with values for all expresions in the cost function (terminal cost, lane cost, input cost etc.)
-alpha_log      = zeros(2*selectedStates.Np,length(t),n_laps)    #logs the coefficients for the convex hull
-#### Initialize variables needed for the main loops
+selStates_log  = zeros(Nl*selectedStates.Np,4,length(t),n_laps)   #array to log the selected states in every iteration of every lap
+statesCost_log = zeros(Nl*selectedStates.Np,length(t),n_laps)     #array to log the selected states' costs in every iteration of every lap
+z_pred_log     = zeros(mpcParams.N+1,4,length(t),n_laps)          #array to log the predicted states for all time steps for later plotting
+u_pred_log     = zeros(mpcParams.N,2,length(t),n_laps)            #array to log the predicted inputs for all time steps for later plotting
+cost_log       = zeros(5,length(t),n_laps)                        #logs the MPC costs with values for all expresions in the cost function (terminal cost, lane cost, input cost etc.)
+alpha_log      = zeros(Nl*selectedStates.Np,length(t),n_laps)     #logs the coefficients for the convex hull
+obs_log        = zeros(length(t),3,n_obs,n_laps)                  #logs the info about the obstacle 
+
+#### Initialize variables needed for the main loops 
 
 j              = 1                                               # set j to one as we start at the first lap 
 z_final_x      = zeros(1,4)::Array{Float64,2}                    # initialize final states...
 u_final        = zeros(1,2)::Array{Float64,2}                    # ...and final control inputs. At the end of every lap are used to initialize the car in the new lap
+obs_final      = zeros(1,3,n_obs)::Array{Float64,3}              # save last obstacles states of one laps to initialize the successive one
 tt             = zeros(length(t),1)::Array{Float64,2}            # logs the time used by the solveLearningMpcProblem
 tt_it          = zeros(length(t),1)::Array{Float64,2}            # logs the total compuational time for one iteration of the inner loop
 zCurr_s        = zeros(length(t),4)::Array{Float64,2}            # (s, ey, epsi, v) every time an iteration ends, save the current states here so that, at the end of a given lap, we can save them in OldTrajectory
 zCurr_x        = zeros(length(t),6)::Array{Float64,2}            # (x, y, v_x,v_y, psi, psi_dot) same as above, in x-y frame
 uCurr          = zeros(length(t),2)::Array{Float64,2}            # every time an iteration ends, save here the applied input so that, at the end of a given lap, we can save them
 curvature_curr = zeros(length(t))::Array{Float64,1}              # curvature as calculated in every iteration of the inner loop
+obs_curr       = zeros(length(t),3,n_obs)::Array{Float64,3}      # info about the obstacle in the current lap
 
-# set the initial conditions as zCurr_x to initialize first iteration of first lap
+#### Set the initial conditions as zCurr_x to initialize first iteration of first lap
+
 zCurr_x[1,1]   = z_Init[1]  
 zCurr_x[1,2]   = z_Init[2] 
 zCurr_x[1,3]   = z_Init[3]
@@ -102,12 +111,25 @@ zCurr_x[1,4]   = z_Init[4]
 zCurr_x[1,5]   = z_Init[5]
 zCurr_x[1,6]   = z_Init[6]
 
+#### Set initial conditions on the obstacles
+
+obs_curr[1,1,:] = obstacle.s_obs_init
+obs_curr[1,2,:] = obstacle.ey_obs_init
+obs_curr[1,3,:] = obstacle.v_obs_init
+
 
 #### Start the main loop 
 
 for j=1:n_laps                 # main loop over all laps
 
-    #println("FLAG 1")
+    if j == obstacle.lap_active            # if its time to put the obstacles in the track
+        obstacle.obstacle_active = true    # tell the system to put the obstacles on the track
+    end
+
+    if j > obstacle.lap_active             # initialize current obstacle states with final states from the previous lap
+        obs_curr[1,:,:] = obs_final
+    end
+    
 
     no_solution_found = 0      #counts number of unsuccesful attempts. If too many unsuccesful attempts, the lap will be terminated
 
@@ -131,7 +153,6 @@ for j=1:n_laps                 # main loop over all laps
    #for indice=1:10
         tic()  # tic for iteration time calculation (tt_it)
         
-        #println("FLAG 2")
 
         if j > 1
             if i == (postbuff+2)
@@ -144,7 +165,6 @@ for j=1:n_laps                 # main loop over all laps
 
         # transforms states form x-y coordinates to s-ey coordinates and approximates a curvature around the current postion, returning corresponding polynomial coefficients
         zCurr_s[i,:], trackCoeff.coeffCurvature = trackFrameConversion(zCurr_x[i,:],x_track,y_track,trackCoeff, i,oldTraj,j,true)
-        #println("zCurr_s($i )=",zCurr_s[i,:])
 
         if i == 1 && zCurr_s[1,1] > 2 # if we are in the first iteration and, after the conversion from x-y to s-ey, it results that the s coordinate is greater than 2 
                                       #(meaning, for example, that we haven't crossed the start line yet, thus having an s coordinate big), we force the s coordinate to
@@ -172,6 +192,20 @@ for j=1:n_laps                 # main loop over all laps
             break
         end   
 
+        #### If the obstacles are on the track, find the nearest one
+
+        if obstacle.obstacle_active == true
+
+            # if posInfo.s_target-posInfo.s < obs_detect  # meaning that I could possibly detect obstacles after the finish line
+
+            #     index1=find(obs_curr[i,1,:].< obs_detect+posInfo.s-posInfo.s_target)  # look for obstacles that could cause problems
+
+            index=findmin(obs_curr[i,1,:]-posInfo.s)[2]     # find the index of the nearest obstacle_active
+
+            obs_near = obs_curr[i,:,index]
+        end
+
+
         #### Solve the MPC problem
 
 
@@ -179,24 +213,20 @@ for j=1:n_laps                 # main loop over all laps
 
         tic() # tic for learning MPC time calculations (tt)
         if j <= n_pf       # if we have not completed the path following laps yet, just do path following
-            #println("iteration states,it $i = ",zCurr_s[i,:])
+
             solvePF_MPC(mdl_Path,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]')
-            #println("predicted trajectory at iteration $i ",mpcSol.z[1:5,:])
+
 ###########################################################################################################################################
         elseif j > n_pf    # if we have already completed all the path following laps, compute the states needed for the convex hull and solve the LMPC
 
-            convhullStates(oldTraj, posInfo, mpcParams,lapStatus, selectedStates)
-            solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
+            convhullStates(oldTraj, posInfo, mpcParams,lapStatus, selectedStates, obs_curr[i,:,:],modelParams,obstacle,simVariables)
+            if obstacle.obstacle_active == false 
+                solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
+            elseif obstacle.obstacle_active == true
+                solveObs_LMPC()
+            end
 
-            # if j>9
-            #     println("zCurr_x[$i,:]= ",zCurr_x[i,:])
-            #     println("zCurr_s[$i,:]= ",zCurr_s[i,:])
-            #     println("Selected states at it $i= ",selectedStates.selStates)
-            #     println("Costs of states at it $i= ",selectedStates.statesCost)
-            #     println("predicted trajectory at it $i= ",mpcSol.z)
-            #     println("alphas at it $i= ",mpcSol.alpha)
-            #     println("sum of all the alphas= ",sum(mpcSol.alpha))
-            # end
+
 
             alpha_log[:,i,j] = mpcSol.alpha # save the coefficients for convex hull computed in iteration i of lap j
         

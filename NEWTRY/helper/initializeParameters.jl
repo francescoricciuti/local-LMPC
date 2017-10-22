@@ -1,14 +1,14 @@
 # This file initializes all the parameters 
 
 function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.TrackCoeff,modelParams::classes.ModelParams,
-                                oldTraj::classes.OldTrajectory,mpcSol::classes.MpcSol,lapStatus::classes.LapStatus,simVariables::classes.SimulationVariables,selectedStates::classes.SelectedStates,)
+                                oldTraj::classes.OldTrajectory,mpcSol::classes.MpcSol,lapStatus::classes.LapStatus,simVariables::classes.SimulationVariables,selectedStates::classes.SelectedStates,obstacle::classes.Obstacle)
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
     simVariables.n_laps         = 20       # number of laps we want to simulate 
     simVariables.n_pf           = 3        # number of path following laps (must be at least 2)
     simVariables.postbuff       = 40       # number of postbuffer iteration to save
-    dynModel                    = true    # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
+    dynModel                    = true     # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
 
     mpcParams.N                 = 15                        #lenght of prediction horizon
     mpcParams.vPathFollowing    = 0.6                       # reference velocity for the path following stage
@@ -20,6 +20,8 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     mpcParams.Q_lane            = 1.0                       # weight on the soft constraint on the Q_lane
     mpcParams.Q_alpha           = 1.0                       # weight on the soft constraint for convex hull
     mpcParams.Q_vel             = 1.0                       # weight on the soft constraint fot the max velocity
+    mpcParams.Q_obs             = ones(Nl*selectedStates.Np)# weight to esclude some of the old trajectories
+    mpcParams.Q_ell             = [0.01,0.01,0.24]          # weights defining the ellipse for the obstacle
 
     trackCoeff.nPolyCurvature   = 4                       # 4th order polynomial for curvature approximation
     trackCoeff.nPolyXY          = 6 
@@ -44,8 +46,10 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     modelParams.C               = 1.6  
 
     selectedStates.Np           = 25                            # Number of points to take from each previous trajectory to build the convex hull
-    selectedStates.selStates    = zeros(2*selectedStates.Np,4)  
-    selectedStates.statesCost   = zeros(2*selectedStates.Np)
+    selectedStates.Nl           = 2                             # Number of previous laps to include in the convex hull
+    Nl                          = selectedStates.Nl
+    selectedStates.selStates    = zeros(Nl*selectedStates.Np,4)  
+    selectedStates.statesCost   = zeros(Nl*selectedStates.Np)
 
     oldTraj.n_oldTraj           = simVariables.n_laps                                                     # number of old Trajectories for safe set
     oldTraj.oldTraj             = zeros(buffersize,4,oldTraj.n_oldTraj)                  # old trajectories in s-ey frame
@@ -57,7 +61,7 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     oldTraj.u_pred_sol          = zeros(mpcParams.N,2,buffersize,oldTraj.n_oldTraj)      # predicted input for each iteration of past rounds
     oldTraj.cost2target         = zeros(buffersize,oldTraj.n_oldTraj)                    # number of iterations needed to arrive at the target
     oldTraj.curvature           = zeros(buffersize,oldTraj.n_oldTraj)                    # all the curvatures calculated in each iteration of each lap
-    oldTraj.oldAlpha            = zeros(2*selectedStates.Np,buffersize,oldTraj.n_oldTraj)# all the alphas from all iterations of all LMPC laps
+    oldTraj.oldAlpha            = zeros(Nl*selectedStates.Np,buffersize,oldTraj.n_oldTraj)# all the alphas from all iterations of all LMPC laps
     oldTraj.costLap             = zeros(oldTraj.n_oldTraj)                               # number of iterations to complete a full lap
     oldTraj.data_log            = zeros(trackCoeff.nPolyXY +1,trackCoeff.nPolyXY +1,buffersize,oldTraj.n_oldTraj)# logs all the data needed to perform the offline change of coordinates from s-ey to x-y
 
@@ -66,12 +70,20 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     mpcSol.u                    = zeros(mpcParams.N,2)              # array containing all the control inputs computed by the MPC at a given iteration
     mpcSol.z                    = zeros(mpcParams.N+1,4)            # array containing all the states computed by the MPC at a given iteration
     mpcSol.cost                 = zeros(5)                          # optimal costs as computed by the MPC at a given iteration
-    mpcSol.alpha                = zeros(buffersize,2*selectedStates.Np,oldTraj.n_oldTraj)  # coefficients of the convex hull
+    mpcSol.alpha                = zeros(buffersize,Nl*selectedStates.Np,oldTraj.n_oldTraj)  # coefficients of the convex hull
     
     lapStatus.currentLap        = 1         # initialize lap number
     lapStatus.currentIt         = 0         # current iteration in lap 
 
-    
+    obstacle.obstacle_active    = false     # true if we have t consider the obstacles in the optimization problem
+    obstacle.lap_active         = 10        # number of the first lap in which the obstacles are used
+    obstacle.obs_detect         = 1.0       # maximum distance at which we can detect obstacles (in terms of s!!)
+    obstacle.n_obs              = 1         # number of obstacles
+    obstacle. s_obs_init        = [10]      # initial s coordinate of each obstacle
+    obstacle.ey_obs_init        = [-0.7]    # initial ey coordinate of each obstacle
+    obstacle.v_obs_init         = [0]       # initial velocity of each obstacles
+    obstacle.r_s                = 0.5
+    obstacle.r_ey               = 0.3
 
     
 end

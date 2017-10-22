@@ -47,7 +47,8 @@ type SelectedStates                 # Values needed for the convex hull formulat
     selStates::Array{Float64}       # selected states from previous laps ...
     statesCost::Array{Float64}      # ... and their related costs
     Np::Int64                       # number of states to select from each previous lap
-    SelectedStates(selStates=Float64[],statesCost=Float64[],Np=6) = new(selStates,statesCost,Np)
+    Nl::Int64                       # number of previous laps to include in the convex hull
+    SelectedStates(selStates=Float64[],statesCost=Float64[],Np=6,Nl=2) = new(selStates,statesCost,Np,Nl)
 end
 
 
@@ -62,9 +63,12 @@ type MpcParams                     # parameters for MPC
     Q_lane::Float64                # weight on the soft constraint for the lane
     Q_alpha::Float64               # weight on the soft constraint for the convex hull
     Q_vel::Float64                 # weight on the soft constraint for the maximum velocity
+    Q_obs::Array{Float64}          # weight used to esclude some of the old trajectories from the optimization problem
+    Q_ell::Array{Float64}          # weights defining the ellipse for the obstacle
 
-    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0,Q_vel=0) = 
-    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha,Q_vel)
+
+    MpcParams(N=0,vPathFollowing=1.0,QderivZ=Float64[],QderivU=Float64[],R=Float64[],Q=Float64[],Q_cost=0.7,Q_lane=0.5,Q_alpha=1.0,Q_vel=0,Q_obs=Float64[],Q_ell=Float64[]) = 
+    new(N,vPathFollowing,QderivZ,QderivU,R,Q,Q_cost,Q_lane,Q_alpha,Q_vel,Q_obs,Q_ell)
 end
 
 type PosInfo            # current position information
@@ -117,5 +121,17 @@ type ModelParams                # Values for the model
     new(l_A,l_B,dt,u_lb,u_ub,z_lb,z_ub,v_max,max_alpha, mass, mu, g, I_z, B, C)
 end
 
+type Obstacle
+    obstacle_active::Bool       # true if we have to consider the obstacles in the optimization problem
+    lap_active::Int64           # number of the first lap in which the obstacles are used
+    obs_detect::Float64         # maximum distance at which we can detect obstacles (in terms of s!!)
+    n_obs::Int64                # number of obstacles in the track
+    s_obs_init::Array{Float64}  # initial s coordinate of each obstacle
+    ey_obs_init::Array{Float64} # initial ey coordinate of each obstacle
+    v_obs_init::Array{Float64}  # initial velocity of each obstacles
+    r_s::Float64                # radius on the s coordinate of the ellipse describing the obstacles
+    r_ey::Float64               # radius on the ey coordinate of the ellipse describing the obstacle 
+
+    Obstacle(obstacle_active=false,,lap_active=10,obs_detect=1.0,n_obs=1,s_obs_init=Float64[],ey_obs_init=Float64[],v_obs_init=Float64[],r_s=0.5,r_ey=0.3) = new(obstacle_active,lap_active,obs_detect,n_obs,s_obs_init,ey_obs_init,v_obs_init,r_s,r_ey)
 end
 
