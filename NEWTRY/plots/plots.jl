@@ -157,20 +157,6 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             y_pred  = pred_sol_xy[:,2,j]
 
 
-
-           
-           
-            # olds_1    = oldTraj.oldTraj[j-1:j+7,1,i-1]
-            # olds_2    = oldTraj.oldTraj[j-1:j+7,1,i-2]
-            # oldey_1   = oldTraj.oldTraj[j-1:j+7,2,i-1]
-            # oldey_2   = oldTraj.oldTraj[j-1:j+7,2,i-2]
-            # oldepsi_1 = oldTraj.oldTraj[j-1:j+7,3,i-1]
-            # oldepsi_2 = oldTraj.oldTraj[j-1:j+7,3,i-2]
-            # oldv_1    = oldTraj.oldTraj[j-1:j+7,4,i-1]
-            # oldv_2    = oldTraj.oldTraj[j-1:j+7,4,i-2]
-
-            #println(olds)
-            #println(size(t))
             
             
             figure(1)
@@ -195,7 +181,7 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             plot(s_pred,v_pred,"or")
             plot(olds,oldv,"b")
             plot(olds2,oldv2,"b")
-            ylim(findmin(oldTraj.z_pred_sol[:,4,:,i])[1],findmax(oldTraj.z_pred_sol[:,4,:,i])[1])
+            #ylim(findmin(oldTraj.z_pred_sol[:,4,:,i])[1],findmax(oldTraj.z_pred_sol[:,4,:,i])[1])
             title("State v in lap $i ")
             grid("on")
 

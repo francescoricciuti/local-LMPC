@@ -5,10 +5,16 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 20       # number of laps we want to simulate 
-    simVariables.n_pf           = 3        # number of path following laps (must be at least 2)
+    simVariables.n_laps         = 12       # number of laps we want to simulate 
+    simVariables.n_pf           = 5        # number of path following laps (must be at least Nl)
     simVariables.postbuff       = 40       # number of postbuffer iteration to save
-    dynModel                    = true     # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
+    dynModel                    = false     # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
+
+    selectedStates.Np           = 25                            # Number of points to take from each previous trajectory to build the convex hull
+    selectedStates.Nl           = 5                             # Number of previous laps to include in the convex hull
+    Nl                          = selectedStates.Nl
+    selectedStates.selStates    = zeros(Nl*selectedStates.Np,4)  
+    selectedStates.statesCost   = zeros(Nl*selectedStates.Np)
 
     mpcParams.N                 = 15                        #lenght of prediction horizon
     mpcParams.vPathFollowing    = 0.6                       # reference velocity for the path following stage
@@ -45,18 +51,12 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     modelParams.B               = 6.0  
     modelParams.C               = 1.6  
 
-    selectedStates.Np           = 25                            # Number of points to take from each previous trajectory to build the convex hull
-    selectedStates.Nl           = 2                             # Number of previous laps to include in the convex hull
-    Nl                          = selectedStates.Nl
-    selectedStates.selStates    = zeros(Nl*selectedStates.Np,4)  
-    selectedStates.statesCost   = zeros(Nl*selectedStates.Np)
-
     oldTraj.n_oldTraj           = simVariables.n_laps                                                     # number of old Trajectories for safe set
     oldTraj.oldTraj             = zeros(buffersize,4,oldTraj.n_oldTraj)                  # old trajectories in s-ey frame
     oldTraj.oldTrajXY           = zeros(buffersize,6,oldTraj.n_oldTraj)                  # old trajectories in x-y frame
     oldTraj.oldNIter            = zeros(oldTraj.n_oldTraj)                               # how many iterations to complete that particular iteration
     oldTraj.oldInput            = zeros(buffersize,2,oldTraj.n_oldTraj)                  # old Inputs 
-    oldTraj.costs               = zeros(5,buffersize,oldTraj.n_oldTraj)                  # optimal values of the cost function elements for each optimization iteration
+    oldTraj.costs               = zeros(7,buffersize,oldTraj.n_oldTraj)                  # optimal values of the cost function elements for each optimization iteration
     oldTraj.z_pred_sol          = zeros(mpcParams.N+1,4,buffersize,oldTraj.n_oldTraj)    # predicted states (in s-ey frame) for each iteration of past rounds
     oldTraj.u_pred_sol          = zeros(mpcParams.N,2,buffersize,oldTraj.n_oldTraj)      # predicted input for each iteration of past rounds
     oldTraj.cost2target         = zeros(buffersize,oldTraj.n_oldTraj)                    # number of iterations needed to arrive at the target
@@ -76,14 +76,14 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     lapStatus.currentIt         = 0         # current iteration in lap 
 
     obstacle.obstacle_active    = false     # true if we have t consider the obstacles in the optimization problem
-    obstacle.lap_active         = 10        # number of the first lap in which the obstacles are used
-    obstacle.obs_detect         = 1.0       # maximum distance at which we can detect obstacles (in terms of s!!)
+    obstacle.lap_active         = 11        # number of the first lap in which the obstacles are used
+    obstacle.obs_detect         = 0.5       # maximum distance at which we can detect obstacles (in terms of s!!)
     obstacle.n_obs              = 1         # number of obstacles
-    obstacle. s_obs_init        = [10]      # initial s coordinate of each obstacle
-    obstacle.ey_obs_init        = [-0.7]    # initial ey coordinate of each obstacle
+    obstacle.s_obs_init         = [30]       # initial s coordinate of each obstacle
+    obstacle.ey_obs_init        = [-1]     # initial ey coordinate of each obstacle
     obstacle.v_obs_init         = [0]       # initial velocity of each obstacles
     obstacle.r_s                = 0.5
-    obstacle.r_ey               = 0.3
+    obstacle.r_ey               = 0.2
 
     
 end
