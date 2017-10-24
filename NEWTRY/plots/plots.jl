@@ -191,8 +191,7 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             plot(x_track',y_track',"g",inner_x,inner_y,"b",outer_x,outer_y,"b")
             plot(x_pred,y_pred,"or")
 
-
-            sleep(0.2)
+            sleep(0.1)
         end
     end
 end
@@ -200,7 +199,7 @@ end
 
 
 
-function animation(code::AbstractString,laps=Array{Int64})
+function animation(code::AbstractString,lap=Int64)
 
 
 
@@ -222,7 +221,7 @@ function animation(code::AbstractString,laps=Array{Int64})
 
     v_ref = mpcParams.vPathFollowing
 
-    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff)
+    inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff,oldTraj)
 
     #Construct Figure and Plot Data
     fig = figure("PathFollowing",figsize=(10,10))
@@ -257,8 +256,8 @@ function animation(code::AbstractString,laps=Array{Int64})
         global line3
         global line4
         
-        x = oldTraj.oldTrajXY[k,1,1]
-        y = oldTraj.oldTrajXY[k,2,1]
+        x = oldTraj.oldTrajXY[k,1,lap]
+        y = oldTraj.oldTrajXY[k,2,lap]
         
         line1[:set_data](x,y)
         line2[:set_data](inner_x[:],inner_y[:])

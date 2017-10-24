@@ -282,6 +282,7 @@ function trackFrameConversion(states_x::Array{Float64},x_track::Array{Float64},y
     if save_data==true
         oldTraj.data_log[:,1,itercount,lap] = coeffX
         oldTraj.data_log[:,2,itercount,lap] = coeffY
+        oldTraj.data_log[1,3,itercount,lap] = xyPathAngle
     end
 
     zCurr_s = zeros(4)
