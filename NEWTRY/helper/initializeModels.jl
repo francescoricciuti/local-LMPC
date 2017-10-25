@@ -55,6 +55,7 @@ type initPathFollowingModel
         #### Defining reference trajectory for path following
 
         z_Ref       = cat(2,zeros(N+1,3),v_ref*ones(N+1,1))  # Reference trajectory: path following -> stay on line and keep constant velocity
+        #z_Ref       = cat(2,zeros(N+1,1),0.8*ones(N+1,1),zeros(N+1,1),v_ref*ones(N+1,1))
         u_Ref       = zeros(N,2)
 
         #### Defining model, variables and constraints 

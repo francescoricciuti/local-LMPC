@@ -69,6 +69,8 @@ dynModel   = simVariables.dynModel            # boolean variable telling the sim
 Nl         = selectedStates.Nl                # number of previous laps to consider in the convex hull
 n_obs      = obstacle.n_obs                   # number of obstacles in the track
 obs_detect = obstacle.obs_detect              # maximum distance at which we can detect obstacles
+r_s        = obstacle.r_s                     # radius of the ellipse describing the obstacle on the s coordinate
+r_ey       = obstacle.r_ey                    # radius of the ellipse describing the obstacle on the ey coordinate
 
 #### Initialize Models
 
@@ -200,13 +202,29 @@ for j=1:n_laps                 # main loop over all laps
 
         if obstacle.obstacle_active == true
 
-            # if posInfo.s_target-posInfo.s < obs_detect  # meaning that I could possibly detect obstacles after the finish line
+            obs_temp = obs_curr[i,:,:]
 
-            #     index1=find(obs_curr[i,1,:].< obs_detect+posInfo.s-posInfo.s_target)  # look for obstacles that could cause problems
 
-            dist,index=findmin(obs_curr[i,1,:]-posInfo.s)     # find the minimum distance and the index of the nearest obstacle_active
+
+            if posInfo.s_target-posInfo.s < obs_detect  # meaning that I could possibly detect obstacles after the finish line
+
+                index1=find(obs_curr[i,1,:].< obs_detect+posInfo.s-posInfo.s_target)  # look for obstacles that could cause problems
+
+                obs_temp[1,1,index1] = posInfo.s_target + obs_curr[i,1,index1]
+
+                println("****FLAG TEST*****")
+                println(obs_temp[1,1,index1])
+                println("****FLAG TEST*****")
+
+            end
+
+
+            dist,index=findmin(sqrt((obs_temp[1,1,:]-zCurr_s[i,1]).^2 + (obs_temp[1,2,:]-zCurr_s[i,2]).^2))
+
+            #dist,index=findmin(abs(obs_temp[1,1,:]-posInfo.s))     # find the minimum distance and the index of the nearest obstacle_active
             println("dist= ",dist)
-            obs_near = obs_curr[i,:,index]
+            println("obstacle's position= ",obs_temp[1,1,:])
+            obs_near = obs_temp[1,:,index]
         end
 
 
@@ -222,23 +240,23 @@ for j=1:n_laps                 # main loop over all laps
 
 ###########################################################################################################################################
         elseif j > n_pf    # if we have already completed all the path following laps, compute the states needed for the convex hull and solve the LMPC
-
+            tic()
             convhullStates(oldTraj, posInfo, mpcParams,lapStatus, selectedStates, obs_curr[i,:,:],modelParams,obstacle,simVariables)
-
+            convTime = toq()
+            println("convhullStates time= ",convTime)
             if obstacle.obstacle_active == false 
                 solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
             elseif obstacle.obstacle_active == true
                 if dist > obs_detect || zCurr_s[i,1]>=obs_near[1,1]+obstacle.r_s
                     solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
                     println("FLAG LMPC")
-                    # println("current s state at iteration $i= ",zCurr_s[i,:])
-                    # println("current xy state at it $i= ",zCurr_x[i,:])
-                    # println("applied control at it $i= ",[mpcSol.a_x mpcSol.d_f])
-                    # println("predicted trajectory at it $i= ",mpcSol.z)
+                    
                 elseif dist <= obs_detect && zCurr_s[i,1]<obs_near[1,1]+obstacle.r_s
+                    tic()
                     solveObs_LMPC(mdl_obs_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates,obs_near,obstacle)
                     println("FLAG OBS")
-                   
+                    LMPCtime=toq()
+                    println("LMPC time= ",LMPCtime)
                 end
             end
 

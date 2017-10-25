@@ -2,6 +2,7 @@ using JLD
 using PyPlot
 using PyCall
 @pyimport matplotlib.animation as anim
+@pyimport matplotlib.patches as patch
 using JLD, ProfileView
 
 matplotlib[:style][:use]("classic") # somehow my julia version changed plotting style 
@@ -12,6 +13,7 @@ include("../helper/classes.jl")
 include("../helper/prova.jl")
 include("createBorders.jl")
 include("xyPredictions.jl")
+include("xyObstacle.jl")
 
 
 function eval_sim(code::AbstractString,laps=Array{Int64})
@@ -27,12 +29,16 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
     mpcParams = Data["mpcParams"]
     buffersize = Data["buffersize"]
     oldTraj     = Data["oldTraj"]
+    obs_log    = Data["obs"]
 
     v_ref = mpcParams.vPathFollowing
 
     inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff,oldTraj)
 
     max_cost = findmax(oldTraj.costLap[:])[1]
+
+    pred_sol_xy_1=xyObstacle(oldTraj,obs_log,1,laps[1],trackCoeff)
+   # pred_sol_xy_2=xyObstacle(oldTraj,obs_log,2,laps[1],trackCoeff)
 
 
     close("all")
@@ -44,11 +50,17 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
 
         x = oldTraj.oldTrajXY[:,1,i]
         y = oldTraj.oldTrajXY[:,2,i]
-    
-        figure()
+        
+        ellfig = figure()
+        ax = ellfig[:add_subplot](1,1,1)
+        ax[:set_aspect]("equal")
         plot(x,y,"g")
         plot(x_track',y_track',"r",inner_x,inner_y,"b",outer_x,outer_y,"b")
-        axis("equal")
+        ell1 = patch.Ellipse([pred_sol_xy_1[1,1],pred_sol_xy_1[2,1]], 1, 0.4, angle=0.0)
+        #ell2 = patch.Ellipse([pred_sol_xy_2[1,1],pred_sol_xy_2[2,1]], 1, 0.4, angle=0.0)
+        ax[:add_artist](ell1)
+        #ax[:add_artist](ell2)
+        #axis("equal")
         grid("on")
         title("X-Y view of Lap $i")
 
@@ -63,7 +75,7 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
         title("State S in lap $i ")
         grid("on")
         subplot(222)
-        plot(t,oldTraj.oldTraj[1:max_cost,2,i])
+        plot(t,oldTraj.oldTraj[1:max_cost,2,i]) 
         title("State ey in lap $i ")
         grid("on")
         subplot(223)
@@ -96,6 +108,7 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
     buffersize = Data["buffersize"]
     oldTraj     = Data["oldTraj"]
     selectedStates = Data["selectedStates"]
+    obs_log    = Data["obs"]
 
     v_ref = mpcParams.vPathFollowing
 
@@ -111,7 +124,10 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
 
     for i = laps
 
+        pred_sol_xy_obs=xyObstacle(oldTraj,obs_log,1,i,trackCoeff)
         pred_sol_xy = xyPredictions(oldTraj,i,trackCoeff)
+
+        #println(obs_log[1:100,1,1,10])
 
 
         # s_pred    = oldTraj.z_pred_sol[:,1,1,i]
@@ -186,12 +202,23 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             grid("on")
 
 
-            figure(2)
+            ellfig = figure(2)
             clf()
+            ax = ellfig[:add_subplot](1,1,1)
+            ax[:set_aspect]("equal")
+            ell1 = patch.Ellipse([pred_sol_xy_obs[1,j],pred_sol_xy_obs[2,j]], 1, 0.4, angle=0.0)
+            ax[:add_artist](ell1)
+            x = oldTraj.oldTrajXY[j,1,i]
+            y = oldTraj.oldTrajXY[j,2,i]
+            x_obs = pred_sol_xy_obs[1,j]
+            y_obs = pred_sol_xy_obs[2,j]
             plot(x_track',y_track',"g",inner_x,inner_y,"b",outer_x,outer_y,"b")
-            plot(x_pred,y_pred,"or")
+            plot(x,y,"or")
+            plot(x_obs,y_obs,"ob")
+            #println(pred_sol_xy_obs[1,j])
+            
 
-            sleep(0.1)
+            sleep(0.0001)
         end
     end
 end
@@ -214,6 +241,7 @@ function animation(code::AbstractString,lap=Int64)
     mpcParams = Data["mpcParams"]
     buffersize = Data["buffersize"]
     oldTraj     = Data["oldTraj"]
+    obs_log    = Data["obs"]
 
     N = mpcParams.N
     predTraj = oldTraj.z_pred_sol
@@ -222,6 +250,9 @@ function animation(code::AbstractString,lap=Int64)
     v_ref = mpcParams.vPathFollowing
 
     inner_x,inner_y,outer_x,outer_y = createBorders(x_track,y_track,trackCoeff,oldTraj)
+    pred_sol_xy_1=xyObstacle(oldTraj,obs_log,1,lap,trackCoeff)
+    
+
 
     #Construct Figure and Plot Data
     fig = figure("PathFollowing",figsize=(10,10))
@@ -229,7 +260,11 @@ function animation(code::AbstractString,lap=Int64)
     global line1 = ax[:plot]([],[],"or")[1]
     global line2 = ax[:plot]([],[],"b-")[1]
     global line3 = ax[:plot]([],[],"g-")[1]
-    global line4 = ax[:plot]([],[],"b-")[1]   
+    global line4 = ax[:plot]([],[],"b-")[1]
+    ell1 = patch.Ellipse([pred_sol_xy_1[1,1],pred_sol_xy_1[2,1]], 1, 0.4, angle=0.0)
+    
+    global line5 = ax[:add_artist](ell1)
+   
     
 
 
@@ -239,12 +274,14 @@ function animation(code::AbstractString,lap=Int64)
         global line2
         global line3
         global line4
+        global line5
+        
         line1[:set_data]([],[])
         line2[:set_data]([],[])
         line3[:set_data]([],[])
         line4[:set_data]([],[])
     
-        return (line1,line2,line3,line4,Union{})  # Union{} is the new word for None
+        return (line1,line2,line3,line4,line5,Union{})  # Union{} is the new word for None
     end
 
     steps = 15
@@ -255,15 +292,21 @@ function animation(code::AbstractString,lap=Int64)
         global line2
         global line3
         global line4
+        global line5
+        
         
         x = oldTraj.oldTrajXY[k,1,lap]
         y = oldTraj.oldTrajXY[k,2,lap]
+        ell1 = patch.Ellipse([pred_sol_xy_1[1,k],pred_sol_xy_1[2,k]], 1, 0.4, angle=0.0)
+        
         
         line1[:set_data](x,y)
         line2[:set_data](inner_x[:],inner_y[:])
         line3[:set_data](x_track[:]',y_track[:]')
-        line4[:set_data](outer_x[:],outer_y[:])        
-        return (line1,line2,line3,line4,Union{})
+        line4[:set_data](outer_x[:],outer_y[:])     
+        line5 = ax[:add_artist](ell1)
+           
+        return (line1,line2,line3,line4,line5,Union{})
     end
 
     myanim = anim.FuncAnimation(fig, animate, init_func=init, frames=1000, interval=20)

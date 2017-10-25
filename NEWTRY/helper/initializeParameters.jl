@@ -5,13 +5,13 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 12       # number of laps we want to simulate 
-    simVariables.n_pf           = 2        # number of path following laps (must be at least Nl)
+    simVariables.n_laps         = 10       # number of laps we want to simulate 
+    simVariables.n_pf           = 5        # number of path following laps (must be at least Nl)
     simVariables.postbuff       = 40       # number of postbuffer iteration to save
     dynModel                    = false     # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
 
-    selectedStates.Np           = 25                            # Number of points to take from each previous trajectory to build the convex hull
-    selectedStates.Nl           = 2                             # Number of previous laps to include in the convex hull
+    selectedStates.Np           = 30                            # Number of points to take from each previous trajectory to build the convex hull
+    selectedStates.Nl           = 5                             # Number of previous laps to include in the convex hull
     Nl                          = selectedStates.Nl
     selectedStates.selStates    = zeros(Nl*selectedStates.Np,4)  
     selectedStates.statesCost   = zeros(Nl*selectedStates.Np)
@@ -27,7 +27,7 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     mpcParams.Q_alpha           = 1.0                       # weight on the soft constraint for convex hull
     mpcParams.Q_vel             = 1.0                       # weight on the soft constraint fot the max velocity
     mpcParams.Q_obs             = ones(Nl*selectedStates.Np)# weight to esclude some of the old trajectories
-    mpcParams.Q_ell             = [0.01,0.01,0.24]          # weights defining the ellipse for the obstacle
+    mpcParams.Q_ell             = [0.001,0.001,0.024]#[0.01,0.01,0.24]          # weights defining the ellipse for the obstacle
 
     trackCoeff.nPolyCurvature   = 4                       # 4th order polynomial for curvature approximation
     trackCoeff.nPolyXY          = 6 
@@ -76,14 +76,15 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     lapStatus.currentIt         = 0         # current iteration in lap 
 
     obstacle.obstacle_active    = false     # true if we have t consider the obstacles in the optimization problem
-    obstacle.lap_active         = 6        # number of the first lap in which the obstacles are used
-    obstacle.obs_detect         = 0.5       # maximum distance at which we can detect obstacles (in terms of s!!)
+    obstacle.lap_active         = 9         # number of the first lap in which the obstacles are used
+    obstacle.obs_detect         = 2         # maximum distance at which we can detect obstacles (in terms of s!!)
     obstacle.n_obs              = 1         # number of obstacles
     obstacle.s_obs_init         = [30]       # initial s coordinate of each obstacle
-    obstacle.ey_obs_init        = [-1]     # initial ey coordinate of each obstacle
+    obstacle.ey_obs_init        = [0]   # initial ey coordinate of each obstacle
     obstacle.v_obs_init         = [0]       # initial velocity of each obstacles
     obstacle.r_s                = 0.5
     obstacle.r_ey               = 0.2
+    obstacle.inv_step           = 4         # number of step of invariance required for the safe set
 
     
 end
