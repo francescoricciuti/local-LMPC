@@ -47,7 +47,8 @@ type SelectedStates                 # Values needed for the convex hull formulat
     selStates::Array{Float64}       # selected states from previous laps ...
     statesCost::Array{Float64}      # ... and their related costs
     Np::Int64                       # number of states to select from each previous lap
-    SelectedStates(selStates=Float64[],statesCost=Float64[],Np=6) = new(selStates,statesCost,Np)
+    Nl::Int64                       # number of previous laps to consider in the convex hull
+    SelectedStates(selStates=Float64[],statesCost=Float64[],Np=6,Nl=2) = new(selStates,statesCost,Np,Nl)
 end
 
 
