@@ -352,6 +352,7 @@ type initObsModel
     eps_lane::Array{JuMP.Variable,1}
     eps_alpha::Array{JuMP.Variable,1}
     eps_vel::Array{JuMP.Variable,1}
+    eps_constraint::Array{JuMP.Variable,1}
     alpha::Array{JuMP.Variable,1}
     z_Ol::Array{JuMP.Variable,2}
     u_Ol::Array{JuMP.Variable,2}
@@ -369,6 +370,7 @@ type initObsModel
     velocityCost::JuMP.NonlinearExpression
     obstacleCost1::JuMP.NonlinearExpression
     obstacleCost2::JuMP.NonlinearExpression
+    obstacleSlackCost::JuMP.NonlinearExpression
 
     function initObsModel(mpcParams::classes.MpcParams,modelParams::classes.ModelParams,trackCoeff::classes.TrackCoeff,selectedStates::classes.SelectedStates,obstacle::classes.Obstacle)
 
@@ -426,6 +428,7 @@ type initObsModel
         @variable(mdl, eps_lane[1:N+1] >= 0)   # eps for soft lane constraints
         #@variable(mdl, eps_alpha[1:4] >=0)     # eps for soft constraint on alpha
         @variable(mdl, eps_vel[1:N+1]>=0)      # eps for soft constraint on velocity
+        @variable(mdl, eps_constraint[1:N+1]>=0) # eps for soft constraint obstacle avoidance
 
 
         for i=1:2
@@ -461,6 +464,8 @@ type initObsModel
         end     
         @NLconstraint(mdl, [i=2:N+1], z_Ol[i,2] <= ey_max + eps_lane[i])   # lane constraint are implemented as soft constraints 
         @NLconstraint(mdl, [i=2:N+1], z_Ol[i,2] >= -ey_max - eps_lane[i])  # lane constraint are implemented as soft constraints 
+
+        @NLconstraint(mdl, [i=2,N+1], (((z_Ol[i,1]-obs[i,1])^2)/(r_s^2)) + (((z_Ol[i,2]-obs[i,2])^2)/(r_ey^2)) -1 - eps_constraint[i]^2 == 0)
 
 
         
@@ -511,10 +516,14 @@ type initObsModel
         # --------------------------------
         @NLexpression(mdl, obstacleCost2, sum{ ((N+1.2-0.2*k)/(N+1))*(3*Q_ell[1]/(Q_ell[2]+(0.6*(((( z_Ol[k,1]-obs[k,1] )/( r_s ))^2)+((( z_Ol[k,2]-obs[k,2] )/( r_ey ))^2)))))   ,k=1:N+1})
 
+        # Soft Constraint on the Obstacle
+        # --------------------------------
+        @NLexpression(mdl, obstacleSlackCost, sum{-log(eps_constraint[i]),i=2:N+1})
+
         # Overall Cost function (objective of the minimization)
         # -----------------------------------------------------
 
-        @NLobjective(mdl, Min, derivCost + laneCost + controlCost + terminalCost + velocityCost + obstacleCost1 + obstacleCost2)# + slackCost)
+        @NLobjective(mdl, Min, derivCost + laneCost + controlCost + terminalCost + velocityCost + obstacleSlackCost)#+ obstacleCost1 + obstacleCost2)# + slackCost)
 
         #### Update model values
 
@@ -532,8 +541,9 @@ type initObsModel
         #m.slackCost   = slackCost   # cost on alpha
         m.terminalCost= terminalCost# terminal cost
         m.velocityCost= velocityCost#velocity cost
-        m.obstacleCost1= obstacleCost1# obstacleCost1
-        m.obstacleCost2= obstacleCost2# obstacleCost2
+        #m.obstacleCost1= obstacleCost1# obstacleCost1
+        #m.obstacleCost2= obstacleCost2# obstacleCost2
+        m.obstacleSlackCost=obstacleSlackCost
         m.selStates   = selStates   # selected states
         m.statesCost  = statesCost  # cost of the selected states
         m.alpha       = alpha       # parameters of the convex hull

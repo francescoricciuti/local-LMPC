@@ -80,7 +80,7 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     obstacle.obs_detect         = 2         # maximum distance at which we can detect obstacles (in terms of s!!)
     obstacle.n_obs              = 1         # number of obstacles
     obstacle.s_obs_init         = [30]       # initial s coordinate of each obstacle
-    obstacle.ey_obs_init        = [0]   # initial ey coordinate of each obstacle
+    obstacle.ey_obs_init        = [1]   # initial ey coordinate of each obstacle
     obstacle.v_obs_init         = [0]       # initial velocity of each obstacles
     obstacle.r_s                = 0.5
     obstacle.r_ey               = 0.2
