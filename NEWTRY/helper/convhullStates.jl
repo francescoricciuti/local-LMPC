@@ -7,7 +7,7 @@
 # z[4] = v
 
 
-function convhullStates(oldTraj::classes.OldTrajectory, posInfo::classes.PosInfo, mpcParams::classes.MpcParams,lapStatus::classes.LapStatus,selectedStates::classes.SelectedStates, modelParams::classes.ModelParams,simVariables::classes.SimulationVariables)
+function convhullStates(oldTraj::classes.OldTrajectory, posInfo::classes.PosInfo, mpcParams::classes.MpcParams,lapStatus::classes.LapStatus,selectedStates::classes.SelectedStates, obs::Array{Float64},modelParams::classes.ModelParams,obstacle::classes.Obstacle,simVariables::classes.SimulationVariables)
 
     # Read Inputs
     s               = posInfo.s          # current s 
@@ -18,7 +18,10 @@ function convhullStates(oldTraj::classes.OldTrajectory, posInfo::classes.PosInfo
     Nl              = selectedStates.Nl  # number of previous laps to take in consideration for the convex hull
     N               = mpcParams.N        # prediction horizon    
     dt              = modelParams.dt     # time step
-    n_pf            = simVariables.n_pf
+    n_pf            = simVariables.n_pf  # number of path following laps 
+    r_s             = obstacle.r_s       # radius on the s coordinate of the ellipse describing the obstacle
+    r_ey            = obstacle.r_ey      # radius on the ey coordinate of the ellipse describing the obstacle
+   
     
  
     selected_laps = zeros(Int64,Nl)
@@ -58,6 +61,12 @@ function convhullStates(oldTraj::classes.OldTrajectory, posInfo::classes.PosInfo
     off = 5
     idx_s = idx_s + off
 
+    # Propagate the obstacle for the prediction horizon
+
+    obs_prop_s  = obs[1,1,:] + dt*N*obs[1,3,:]
+    obs_prop_ey = obs[1,2,:]
+   
+
     
     
     for j = 0:(Nl-1)
@@ -66,8 +75,19 @@ function convhullStates(oldTraj::classes.OldTrajectory, posInfo::classes.PosInfo
         
         selectedStates.statesCost[i=(j*Np)+1:(j+1)*Np] = oldTraj.cost2target[i=idx_s[j+1]-(j*N_points):idx_s[j+1]-(j*N_points)+Np-1,selected_laps[j+1]]  # and their cost
 
-        
-        
+        if obstacle.lap_active == true   # if the obstacles are on the track, check if any of the selected states interferes with the propagated obstacle
+
+            for n=1:obstacle.n_obs
+                ellipse_check = (((selectedStates.selStates[i=(j*Np)+1:(j+1)*Np,1]-obs_prop_s[n])/r_s)^2) + (((selectedStates.selStates[i=(j*Np)+1:(j+1)*Np,2]-obs_prop_ey[n])/r_ey)^2)
+                
+                if any(x->x<=1, ellipse_check) == true  # if any of the selected states is in the ellipse
+
+                    index = find(ellipse_check.<=1)     # find all the states in the ellipse 
+
+                    mpcParams.Q_obs[i=(j*Np)+(index[1]-obstacle.inv_step)+1:(j+1)*Np] =  10   # and set the values of the weight to 10, so that they are excluded from optimization
+                end
+            end
+        end     
         
     end
 

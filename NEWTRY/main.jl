@@ -212,9 +212,9 @@ for j=1:n_laps                 # main loop over all laps
 
                 obs_temp[1,1,index1] = posInfo.s_target + obs_curr[i,1,index1]
 
-                println("****FLAG TEST*****")
-                println(obs_temp[1,1,index1])
-                println("****FLAG TEST*****")
+                # println("****FLAG TEST*****")
+                # println(obs_temp[1,1,index1])
+                # println("****FLAG TEST*****")
 
             end
 
@@ -247,17 +247,17 @@ for j=1:n_laps                 # main loop over all laps
             if obstacle.obstacle_active == false 
                 solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
             elseif obstacle.obstacle_active == true
-                if dist > obs_detect || zCurr_s[i,1]>=obs_near[1,1]+obstacle.r_s
-                    solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
-                    println("FLAG LMPC")
+                #if dist > obs_detect || zCurr_s[i,1]>=obs_near[1,1]+obstacle.r_s
+                #    solveLearning_MPC(mdl_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates)
+                #    println("FLAG LMPC")
                     
-                elseif dist <= obs_detect && zCurr_s[i,1]<obs_near[1,1]+obstacle.r_s
+                #elseif dist <= obs_detect && zCurr_s[i,1]<obs_near[1,1]+obstacle.r_s
                     tic()
                     solveObs_LMPC(mdl_obs_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates,obs_near,obstacle)
                     println("FLAG OBS")
                     LMPCtime=toq()
                     println("LMPC time= ",LMPCtime)
-                end
+                #end
             end
 
             alpha_log[:,i,j] = mpcSol.alpha # save the coefficients for convex hull computed in iteration i of lap j
@@ -275,7 +275,7 @@ for j=1:n_laps                 # main loop over all laps
         end
 
         if obstacle.obstacle_active == true
-            obs_curr[i+1,:,:] = obstaclePosition(obs_curr[i,:,:],modelParams,obstacle)
+            obs_curr[i+1,:,:] = obstaclePosition(obs_curr[i,:,:],modelParams,obstacle,posInfo)
         end
 
         #### Once the MPC is solved, save the solution in the log variables for later plotting

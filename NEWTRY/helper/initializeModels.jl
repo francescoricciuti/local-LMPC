@@ -350,9 +350,9 @@ type initObsModel
 
 
     eps_lane::Array{JuMP.Variable,1}
-    eps_alpha::Array{JuMP.Variable,1}
+    #eps_alpha::Array{JuMP.Variable,1}
     eps_vel::Array{JuMP.Variable,1}
-    eps_constraint::Array{JuMP.Variable,1}
+    #eps_constraint::Array{JuMP.Variable,1}
     alpha::Array{JuMP.Variable,1}
     z_Ol::Array{JuMP.Variable,2}
     u_Ol::Array{JuMP.Variable,2}
@@ -364,12 +364,12 @@ type initObsModel
 
     derivCost::JuMP.NonlinearExpression
     controlCost::JuMP.NonlinearExpression
-    slackCost::JuMP.NonlinearExpression
+    #slackCost::JuMP.NonlinearExpression
     laneCost::JuMP.NonlinearExpression
     terminalCost::JuMP.NonlinearExpression
     velocityCost::JuMP.NonlinearExpression
-    obstacleCost1::JuMP.NonlinearExpression
-    obstacleCost2::JuMP.NonlinearExpression
+    #obstacleCost1::JuMP.NonlinearExpression
+    #obstacleCost2::JuMP.NonlinearExpression
     obstacleSlackCost::JuMP.NonlinearExpression
 
     function initObsModel(mpcParams::classes.MpcParams,modelParams::classes.ModelParams,trackCoeff::classes.TrackCoeff,selectedStates::classes.SelectedStates,obstacle::classes.Obstacle)
@@ -377,7 +377,7 @@ type initObsModel
         m = new()
 
         #### Initialize parameters
-        s_target   = posInfo.s_target
+        
 
         dt         = modelParams.dt                # time step
         L_a        = modelParams.l_A               # distance from CoM of the car to the front wheels
@@ -400,7 +400,7 @@ type initObsModel
         Q_lane     = mpcParams.Q_lane::Float64             # weight on the soft constraint on the lane
         Q_alpha    = mpcParams.Q_alpha::Float64            # weight on the soft constraint for the convex hull
         Q_vel      = mpcParams.Q_vel::Float64              # weight on the soft constraint for the max velocity
-        Q_ell      = mpcParams.Q_ell::Array{Float64}
+        #Q_ell      = mpcParams.Q_ell::Array{Float64}
 
       
         Np         = selectedStates.Np::Int64              # how many states to select
@@ -428,7 +428,7 @@ type initObsModel
         @variable(mdl, eps_lane[1:N+1] >= 0)   # eps for soft lane constraints
         #@variable(mdl, eps_alpha[1:4] >=0)     # eps for soft constraint on alpha
         @variable(mdl, eps_vel[1:N+1]>=0)      # eps for soft constraint on velocity
-        @variable(mdl, eps_constraint[1:N+1]>=0) # eps for soft constraint obstacle avoidance
+        #@variable(mdl, eps_constraint[1:N]>=0) # eps for soft constraint obstacle avoidance
 
 
         for i=1:2
@@ -465,7 +465,7 @@ type initObsModel
         @NLconstraint(mdl, [i=2:N+1], z_Ol[i,2] <= ey_max + eps_lane[i])   # lane constraint are implemented as soft constraints 
         @NLconstraint(mdl, [i=2:N+1], z_Ol[i,2] >= -ey_max - eps_lane[i])  # lane constraint are implemented as soft constraints 
 
-        @NLconstraint(mdl, [i=2,N+1], (((z_Ol[i,1]-obs[i,1])^2)/(r_s^2)) + (((z_Ol[i,2]-obs[i,2])^2)/(r_ey^2)) -1 - eps_constraint[i]^2 == 0)
+        #@NLconstraint(mdl, [i=2,N+1], ((z_Ol[i,1]-obs[i,1])/r_s)^2 + ((z_Ol[i,2]-obs[i,2])/r_ey)^2 -1 - eps_constraint[i-1] == 0)
 
 
         
@@ -510,15 +510,16 @@ type initObsModel
 
         # Obstacle Cost 1
         # ---------------------------------
-        @NLexpression(mdl, obstacleCost1, sum{ ((N+1.2-0.2*k)/(N+1))*(Q_ell[1]/(Q_ell[2]+(Q_ell[3]*(((( z_Ol[k,1]-obs[k,1] )/( r_s ))^2)+((( z_Ol[k,2]-obs[k,2] )/( r_ey ))^2)-1))^4))   ,k=1:N+1})
+        #@NLexpression(mdl, obstacleCost1, sum{ ((N+1.2-0.2*k)/(N+1))*(Q_ell[1]/(Q_ell[2]+(Q_ell[3]*(((( z_Ol[k,1]-obs[k,1] )/( r_s ))^2)+((( z_Ol[k,2]-obs[k,2] )/( r_ey ))^2)-1))^4))   ,k=1:N+1})
 
         # Obstacle Cost 2
         # --------------------------------
-        @NLexpression(mdl, obstacleCost2, sum{ ((N+1.2-0.2*k)/(N+1))*(3*Q_ell[1]/(Q_ell[2]+(0.6*(((( z_Ol[k,1]-obs[k,1] )/( r_s ))^2)+((( z_Ol[k,2]-obs[k,2] )/( r_ey ))^2)))))   ,k=1:N+1})
+        #@NLexpression(mdl, obstacleCost2, sum{ ((N+1.2-0.2*k)/(N+1))*(3*Q_ell[1]/(Q_ell[2]+(0.6*(((( z_Ol[k,1]-obs[k,1] )/( r_s ))^2)+((( z_Ol[k,2]-obs[k,2] )/( r_ey ))^2)))))   ,k=1:N+1})
 
         # Soft Constraint on the Obstacle
         # --------------------------------
-        @NLexpression(mdl, obstacleSlackCost, sum{-log(eps_constraint[i]),i=2:N+1})
+        #@NLexpression(mdl, obstacleSlackCost, sum{-log(eps_constraint[i]),i=1:N})
+        @NLexpression(mdl, obstacleSlackCost, 0.1*sum{-log(((z_Ol[i,1]-obs[i,1])/r_s)^2 + ((z_Ol[i,2]-obs[i,2])/r_ey)^2 -1),i=1:N+1})
 
         # Overall Cost function (objective of the minimization)
         # -----------------------------------------------------

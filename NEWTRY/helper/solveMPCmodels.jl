@@ -129,8 +129,8 @@ function solveObs_LMPC(m::initObsModel,mpcSol::classes.MpcSol,mpcParams::classes
     mpcSol.alpha = sol_alpha
     mpcSol.solverStatus = sol_status
     mpcSol.cost  = zeros(7)           
-    mpcSol.cost  = [getvalue(m.derivCost);getvalue(m.controlCost);getvalue(m.laneCost);0;getvalue(m.terminalCost);getvalue(m.obstacleCost1);getvalue(m.obstacleCost2)]
-    println("obstacleCost1= ",getvalue(m.obstacleCost1))
-    println("obstacleCost2= ",getvalue(m.obstacleCost2))
+    mpcSol.cost  = [getvalue(m.derivCost);getvalue(m.controlCost);getvalue(m.laneCost);0;getvalue(m.terminalCost);getvalue(m.obstacleSlackCost);0]#;getvalue(m.obstacleCost1);getvalue(m.obstacleCost2)]
+    println("obstacleSlackCost= ",getvalue(m.obstacleSlackCost))
+    #println("obstacleCost2= ",getvalue(m.obstacleCost2))
     nothing 
 end   
