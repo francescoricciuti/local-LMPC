@@ -5,7 +5,7 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 6       # number of laps we want to simulate 
+    simVariables.n_laps         = 12       # number of laps we want to simulate 
     simVariables.n_pf           = 3        # number of path following laps (must be at least 2)
     simVariables.postbuff       = 40       # number of postbuffer iteration to save
     dynModel                    = true    # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
