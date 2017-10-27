@@ -208,7 +208,9 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
             clf()
             ax = ellfig[:add_subplot](1,1,1)
             ax[:set_aspect]("equal")
-            ell1 = patch.Ellipse([pred_sol_xy_obs[1,j],pred_sol_xy_obs[2,j]], 1, 0.4, angle=0.0)
+            angle_ell = atan2(pred_sol_xy_obs[2,j]-(pred_sol_xy_obs[2,j-1]),pred_sol_xy_obs[1,j]-(pred_sol_xy_obs[1,j-1]))
+            angle_deg = (angle_ell*180)/pi
+            ell1 = patch.Ellipse([pred_sol_xy_obs[1,j],pred_sol_xy_obs[2,j]], 1, 0.4, angle=angle_deg)
             ax[:add_artist](ell1)
             x = oldTraj.oldTrajXY[j,1,i]
             y = oldTraj.oldTrajXY[j,2,i]
@@ -289,7 +291,7 @@ function animation(code::AbstractString,lap=Int64)
     steps = 15
 
     function animate(i)
-        k = i+1
+        k = i+2
         global line1
         global line2
         global line3
@@ -299,7 +301,9 @@ function animation(code::AbstractString,lap=Int64)
         
         x = oldTraj.oldTrajXY[k,1,lap]
         y = oldTraj.oldTrajXY[k,2,lap]
-        ell1 = patch.Ellipse([pred_sol_xy_1[1,k],pred_sol_xy_1[2,k]], 1, 0.4, angle=0.0)
+        angle_ell = atan2(pred_sol_xy_1[2,k]-(pred_sol_xy_1[2,k-1]),pred_sol_xy_1[1,k]-(pred_sol_xy_1[1,k-1]))
+        angle_deg = (angle_ell*180)/pi
+        ell1 = patch.Ellipse([pred_sol_xy_1[1,k],pred_sol_xy_1[2,k]], 1, 0.4, angle=angle_deg)
         
         
         line1[:set_data](x,y)

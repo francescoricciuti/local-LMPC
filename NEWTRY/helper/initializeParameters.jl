@@ -5,7 +5,7 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 11       # number of laps we want to simulate 
+    simVariables.n_laps         = 10       # number of laps we want to simulate 
     simVariables.n_pf           = 5        # number of path following laps (must be at least Nl)
     simVariables.postbuff       = 40       # number of postbuffer iteration to save
     dynModel                    = false     # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
@@ -79,8 +79,8 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     obstacle.lap_active         = 9         # number of the first lap in which the obstacles are used
     obstacle.obs_detect         = 10         # maximum distance at which we can detect obstacles (in terms of s!!)
     obstacle.n_obs              = 1         # number of obstacles
-    obstacle.s_obs_init         = [45]    # initial s coordinate of each obstacle
-    obstacle.ey_obs_init        = [-0.5]       # initial ey coordinate of each obstacle
+    obstacle.s_obs_init         = [20]    # initial s coordinate of each obstacle
+    obstacle.ey_obs_init        = [-0.8]       # initial ey coordinate of each obstacle
     obstacle.v_obs_init         = [2]       # initial velocity of each obstacles
     obstacle.r_s                = 0.5
     obstacle.r_ey               = 0.2
