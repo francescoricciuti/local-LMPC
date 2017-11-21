@@ -75,10 +75,10 @@ function convhullStates(oldTraj::classes.OldTrajectory, posInfo::classes.PosInfo
         
         selectedStates.statesCost[i=(j*Np)+1:(j+1)*Np] = oldTraj.cost2target[i=idx_s[j+1]-(j*N_points):idx_s[j+1]-(j*N_points)+Np-1,selected_laps[j+1]]  # and their cost
 
-        if obstacle.lap_active == true   # if the obstacles are on the track, check if any of the selected states interferes with the propagated obstacle
+        if obstacle.obstacle_active == true   # if the obstacles are on the track, check if any of the selected states interferes with the propagated obstacle
 
             for n=1:obstacle.n_obs
-                ellipse_check = (((selectedStates.selStates[i=(j*Np)+1:(j+1)*Np,1]-obs_prop_s[n])/r_s)^2) + (((selectedStates.selStates[i=(j*Np)+1:(j+1)*Np,2]-obs_prop_ey[n])/r_ey)^2)
+                ellipse_check = (((selectedStates.selStates[i=(j*Np)+1:(j+1)*Np,1]-obs_prop_s[n])/r_s).^2) + (((selectedStates.selStates[i=(j*Np)+1:(j+1)*Np,2]-obs_prop_ey[n])/r_ey).^2)
                 
                 if any(x->x<=1, ellipse_check) == true  # if any of the selected states is in the ellipse
 
