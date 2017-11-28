@@ -38,31 +38,50 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
     max_cost = findmax(oldTraj.costLap[:])[1]
 
     pred_sol_xy_1=xyObstacle(oldTraj,obs_log,1,laps[1],trackCoeff)
-    #pred_sol_xy_2=xyObstacle(oldTraj,obs_log,2,laps[1],trackCoeff)
+    pred_sol_xy_2=xyObstacle(oldTraj,obs_log,2,laps[1],trackCoeff)
     #   pred_sol_xy_3=xyObstacle(oldTraj,obs_log,3,laps[1],trackCoeff)
 
     close("all")
+
+    figure()
+    plot(oldTraj.costLap[:])
+    grid("on")
+    title("Cost of laps")
+
+    vel_mean=zeros(laps[length(laps)])
+
+    for j=1:laps[length(laps)]
+        vel_mean[j] = mean(oldTraj.oldTraj[:,4,j])
+    end
+
+    figure()
+    plot(vel_mean)
+    plot(2.5*ones(laps[length(laps)]),"-")
+    ylim(0,2.7)
+    grid("on")
+    title("Mean velocity over laps")
 
     for i = laps
 
         println("mean velocity of lap $i =",mean(oldTraj.oldTraj[:,4,i]))
         println("cost of lap $i= ",oldTraj.costLap[i])
 
-        x = oldTraj.oldTrajXY[:,1,i]
-        y = oldTraj.oldTrajXY[:,2,i]
+
+        x = oldTraj.oldTrajXY[1:oldTraj.costLap[i],1,i]
+        y = oldTraj.oldTrajXY[1:oldTraj.costLap[i],2,i]
         
         ellfig = figure()
         ax = ellfig[:add_subplot](1,1,1)
         ax[:set_aspect]("equal")
         plot(x,y,"g")
         plot(x_track',y_track',"r",inner_x,inner_y,"b",outer_x,outer_y,"b")
-        ell1 = patch.Ellipse([pred_sol_xy_1[1,1],pred_sol_xy_1[2,1]], 1, 0.4, angle=90.0)
-        #ell2 = patch.Ellipse([pred_sol_xy_2[1,1],pred_sol_xy_2[2,1]], 1, 0.4, angle=0.0)
+        ell1 = patch.Ellipse([pred_sol_xy_1[1,1],pred_sol_xy_1[2,1]], 1, 0.4, angle=0.0)
+        ell2 = patch.Ellipse([pred_sol_xy_2[1,1],pred_sol_xy_2[2,1]], 1, 0.4, angle=90.0)
         #ell3 = patch.Ellipse([pred_sol_xy_3[1,1],pred_sol_xy_3[2,1]], 1, 0.4, angle=90.0)
         ax[:add_artist](ell1)
-        #ax[:add_artist](ell2)
+        ax[:add_artist](ell2)
         #ax[:add_artist](ell3)
-        #axis("equal")
+        axis("equal")
         grid("on")
         title("X-Y view of Lap $i")
 

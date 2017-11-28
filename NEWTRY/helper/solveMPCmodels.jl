@@ -70,7 +70,7 @@ function solveLearning_MPC(m::initLearningModel,mpcSol::classes.MpcSol,mpcParams
     mpcSol.alpha = sol_alpha
     mpcSol.solverStatus = sol_status
     mpcSol.cost  = zeros(7)           # since in the Obstacle Learning MPC we have 7 expressions composing the cost function, to be consistent with the dimension we initialize this with 7 elements...
-    mpcSol.cost  = [getvalue(m.derivCost);getvalue(m.controlCost);getvalue(m.laneCost);getvalue(m.slackCost);getvalue(m.terminalCost);0;0] # ... and set to 0 the last two elements
+    mpcSol.cost  = [getvalue(m.derivCost);getvalue(m.controlCost);getvalue(m.laneCost);0;getvalue(m.terminalCost);0;0] # ... and set to 0 the last two elements
     
     nothing 
 end   
@@ -85,6 +85,7 @@ function solveObs_LMPC(m::initObsModel,mpcSol::classes.MpcSol,mpcParams::classes
     selStates       = selectedStates.selStates::Array{Float64,2}
     statesCost      = selectedStates.statesCost::Array{Float64,1}
     Q_obs           = mpcParams.Q_obs::Array{Float64,1}
+
     N               = mpcParams.N::Int64
     sol_u::Array{Float64,2}    # where all the optimal control actions will be saved
     sol_z::Array{Float64,2}    # where all the optimal states will be saved

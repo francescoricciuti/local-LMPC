@@ -155,7 +155,7 @@ type initLearningModel
 
 
     eps_lane::Array{JuMP.Variable,1}
-    eps_alpha::Array{JuMP.Variable,1}
+    #eps_alpha::Array{JuMP.Variable,1}
     eps_vel::Array{JuMP.Variable,1}
     alpha::Array{JuMP.Variable,1}
     z_Ol::Array{JuMP.Variable,2}
@@ -168,7 +168,7 @@ type initLearningModel
 
     derivCost::JuMP.NonlinearExpression
     controlCost::JuMP.NonlinearExpression
-    slackCost::JuMP.NonlinearExpression
+    #slackCost::JuMP.NonlinearExpression
     laneCost::JuMP.NonlinearExpression
     terminalCost::JuMP.NonlinearExpression
     velocityCost::JuMP.NonlinearExpression
@@ -223,7 +223,7 @@ type initLearningModel
         @variable(mdl, u_Ol[i=1:N,j=1:2] )     # Define control inputs (u=a_x,d_f) with its upper and lower bounds
         @variable(mdl, alpha[1:Nl*Np] >= 0)     # coefficients of the convex hull
         @variable(mdl, eps_lane[1:N+1] >= 0)   # eps for soft lane constraints
-        @variable(mdl, eps_alpha[1:4] >=0)     # eps for soft constraint on alpha
+        #@variable(mdl, eps_alpha[1:4] >=0)     # eps for soft constraint on alpha
         @variable(mdl, eps_vel[1:N+1]>=0)      # eps for soft constraint on velocity
 
 
@@ -287,7 +287,7 @@ type initLearningModel
 
         # Slack cost (soft)
         # ---------------------------------
-        @NLexpression(mdl, slackCost, Q_alpha*sum{10*eps_alpha[i]+100*eps_alpha[i]^2,i=1:4})
+        #@NLexpression(mdl, slackCost, Q_alpha*sum{10*eps_alpha[i]+100*eps_alpha[i]^2,i=1:4})
 
         # Lane cost (soft)
         # ---------------------------------
@@ -317,7 +317,7 @@ type initLearningModel
         m.derivCost   = derivCost   # derivative cost
         m.controlCost = controlCost # control cost
         m.laneCost    = laneCost    # lane cost
-        m.slackCost   = slackCost   # cost on alpha
+        #m.slackCost   = slackCost   # cost on alpha
         m.terminalCost= terminalCost# terminal cost
         m.velocityCost= velocityCost#velocity cost
         m.selStates   = selStates   # selected states
@@ -519,7 +519,7 @@ type initObsModel
         # Soft Constraint on the Obstacle
         # --------------------------------
         #@NLexpression(mdl, obstacleSlackCost, sum{-log(eps_constraint[i]),i=1:N})
-        @NLexpression(mdl, obstacleSlackCost, 0.05*sum{-log(((z_Ol[i,1]-obs[i,1])/r_s)^2 + ((z_Ol[i,2]-obs[i,2])/r_ey)^2 -1),i=1:N+1})
+        @NLexpression(mdl, obstacleSlackCost, 0.01*sum{-log(((z_Ol[i,1]-obs[i,1])/r_s)^2 + ((z_Ol[i,2]-obs[i,2])/r_ey)^2 -1),i=1:N+1})
 
         # Overall Cost function (objective of the minimization)
         # -----------------------------------------------------

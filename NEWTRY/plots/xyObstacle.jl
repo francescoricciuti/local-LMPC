@@ -26,7 +26,8 @@ function xyObstacle(oldTraj::classes.OldTrajectory,obs_log::Array{Float64},obsta
     include("../helper/loadTestMap.jl")
     x_track, y_track = loadTestMap() #load a track to test controller
 
-    
+    println("x_track= ",size(x_track))
+    println("nodes= ",size([x_track; y_track]))
     for i = 1:buffersize
 
             nodes          = [x_track; y_track]
