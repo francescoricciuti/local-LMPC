@@ -38,7 +38,7 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
     max_cost = findmax(oldTraj.costLap[:])[1]
 
     pred_sol_xy_1=xyObstacle(oldTraj,obs_log,1,laps[1],trackCoeff)
-    pred_sol_xy_2=xyObstacle(oldTraj,obs_log,2,laps[1],trackCoeff)
+    #pred_sol_xy_2=xyObstacle(oldTraj,obs_log,2,laps[1],trackCoeff)
     #   pred_sol_xy_3=xyObstacle(oldTraj,obs_log,3,laps[1],trackCoeff)
 
     close("all")
@@ -76,10 +76,10 @@ function eval_sim(code::AbstractString,laps=Array{Int64})
         plot(x,y,"g")
         plot(x_track',y_track',"r",inner_x,inner_y,"b",outer_x,outer_y,"b")
         ell1 = patch.Ellipse([pred_sol_xy_1[1,1],pred_sol_xy_1[2,1]], 1, 0.4, angle=0.0)
-        ell2 = patch.Ellipse([pred_sol_xy_2[1,1],pred_sol_xy_2[2,1]], 1, 0.4, angle=90.0)
+        #ell2 = patch.Ellipse([pred_sol_xy_2[1,1],pred_sol_xy_2[2,1]], 1, 0.4, angle=90.0)
         #ell3 = patch.Ellipse([pred_sol_xy_3[1,1],pred_sol_xy_3[2,1]], 1, 0.4, angle=90.0)
         ax[:add_artist](ell1)
-        ax[:add_artist](ell2)
+        #ax[:add_artist](ell2)
         #ax[:add_artist](ell3)
         axis("equal")
         grid("on")
@@ -224,20 +224,20 @@ function eval_pred(code::AbstractString,laps=Array{Int64})
 
 
             ellfig = figure(2)
-            clf()
+            #clf()
             ax = ellfig[:add_subplot](1,1,1)
             ax[:set_aspect]("equal")
             angle_ell = atan2(pred_sol_xy_obs[2,j]-(pred_sol_xy_obs[2,j-1]),pred_sol_xy_obs[1,j]-(pred_sol_xy_obs[1,j-1]))
             angle_deg = (angle_ell*180)/pi
             ell1 = patch.Ellipse([pred_sol_xy_obs[1,j],pred_sol_xy_obs[2,j]], 1, 0.4, angle=angle_deg)
-            ax[:add_artist](ell1)
+            #ax[:add_artist](ell1)
             x = oldTraj.oldTrajXY[j,1,i]
             y = oldTraj.oldTrajXY[j,2,i]
             x_obs = pred_sol_xy_obs[1,j]
             y_obs = pred_sol_xy_obs[2,j]
             plot(x_track',y_track',"g",inner_x,inner_y,"b",outer_x,outer_y,"b")
             plot(x,y,"or")
-            plot(x_obs,y_obs,"ob")
+            #plot(x_obs,y_obs,"ob")
             #println(pred_sol_xy_obs[1,j])
             
 

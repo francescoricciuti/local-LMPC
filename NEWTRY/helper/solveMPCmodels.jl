@@ -95,12 +95,12 @@ function solveObs_LMPC(m::initObsModel,mpcSol::classes.MpcSol,mpcParams::classes
     # Compute the position of the obstacle  in the whole prediction horizon
 
     for i = 1:N
-        obs[i+1,1] = obs[i,1] + dt*i*obs[i,3]
+        obs[i+1,1] = (obs[i,1] + dt*i*obs[i,3])%60
         obs[i+1,2] = obs[i,2]
         obs[i+1,3] = obs[i,3]
     end
 
-     #println("obs in solveMPC= ",obs)
+    println("obs in solveMPC= ",obs)
 
     # Set values needed by the MPC
 
@@ -118,7 +118,7 @@ function solveObs_LMPC(m::initObsModel,mpcSol::classes.MpcSol,mpcParams::classes
     sol_z       = getvalue(m.z_Ol)
     sol_alpha   = getvalue(m.alpha)
 
-   # println("optimal alpha= ", sol_alpha)
+    println("optimal sol_z= ", sol_z)
 
     # save data to solution class
 

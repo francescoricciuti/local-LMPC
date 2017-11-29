@@ -5,13 +5,13 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     
     simVariables.buffersize     = 2000      # used to initialize the dimensions of the variables in which we will save the data of the Simulations 
     buffersize                  = simVariables.buffersize
-    simVariables.n_laps         = 8       # number of laps we want to simulate 
-    simVariables.n_pf           = 3        # number of path following laps (must be at least Nl)
+    simVariables.n_laps         = 12       # number of laps we want to simulate 
+    simVariables.n_pf           = 5        # number of path following laps (must be at least Nl)
     simVariables.postbuff       = 40       # number of postbuffer iteration to save
     dynModel                    = true     # boolean variable to tell the simulator which model to use (dynModel=True-->it'll use dynamic model, dynModel=False-->it'll use kinematic model)
 
     selectedStates.Np           = 25                            # Number of points to take from each previous trajectory to build the convex hull
-    selectedStates.Nl           = 2                            # Number of previous laps to include in the convex hull
+    selectedStates.Nl           = 5                            # Number of previous laps to include in the convex hull
     Nl                          = selectedStates.Nl
     selectedStates.selStates    = zeros(Nl*selectedStates.Np,4)  
     selectedStates.statesCost   = zeros(Nl*selectedStates.Np)
@@ -76,12 +76,12 @@ function InitializeParameters(mpcParams::classes.MpcParams,trackCoeff::classes.T
     lapStatus.currentIt         = 0         # current iteration in lap 
 
     obstacle.obstacle_active    = false     # true if we have t consider the obstacles in the optimization problem
-    obstacle.lap_active         = 6         # number of the first lap in which the obstacles are used
+    obstacle.lap_active         = 20         # number of the first lap in which the obstacles are used
     obstacle.obs_detect         = 10         # maximum distance at which we can detect obstacles (in terms of s!!)
-    obstacle.n_obs              = 2         # number of obstacles
-    obstacle.s_obs_init         = [30,45]    # initial s coordinate of each obstacle
-    obstacle.ey_obs_init        = [-0.4,-0.8]       # initial ey coordinate of each obstacle
-    obstacle.v_obs_init         = [0,0]       # initial velocity of each obstacles
+    obstacle.n_obs              = 1         # number of obstacles
+    obstacle.s_obs_init         = [15]    # initial s coordinate of each obstacle
+    obstacle.ey_obs_init        = [-0.85]       # initial ey coordinate of each obstacle
+    obstacle.v_obs_init         = [1]       # initial velocity of each obstacles
     obstacle.r_s                = 0.5
     obstacle.r_ey               = 0.2
     obstacle.inv_step           = 1         # number of step of invariance required for the safe set

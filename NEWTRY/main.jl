@@ -158,7 +158,7 @@ for j=1:n_laps                 # main loop over all laps
    while i<=length(t)-1 && !finished    # as long as we have not reached the maximal iteration time for one round or ended the round
    #for indice=1:10
         tic()  # tic for iteration time calculation (tt_it)
-        mpcParams.Q_obs = ones(Nl*selectedStates.Np)
+        
 
         if j > 1
             if i == (postbuff+2)
@@ -241,6 +241,7 @@ for j=1:n_laps                 # main loop over all laps
 ###########################################################################################################################################
         elseif j > n_pf    # if we have already completed all the path following laps, compute the states needed for the convex hull and solve the LMPC
             tic()
+            mpcParams.Q_obs = ones(Nl*selectedStates.Np)
             convhullStates(oldTraj, posInfo, mpcParams,lapStatus, selectedStates, obs_curr[i,:,:],modelParams,obstacle,simVariables)
             convTime = toq()
             println("convhullStates time= ",convTime)
@@ -253,6 +254,8 @@ for j=1:n_laps                 # main loop over all laps
                     
                 #elseif dist <= obs_detect && zCurr_s[i,1]<obs_near[1,1]+obstacle.r_s
                     tic()
+                    #println(mpcParams.Q_obs )
+                    #println(obs_near)
                     solveObs_LMPC(mdl_obs_LMPC,mpcSol,mpcParams,trackCoeff,modelParams,zCurr_s[i,:]',uCurr[i,:]',selectedStates,obs_near,obstacle)
                     println("FLAG OBS")
                     LMPCtime=toq()

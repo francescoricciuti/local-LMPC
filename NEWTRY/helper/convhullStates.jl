@@ -58,12 +58,12 @@ function convhullStates(oldTraj::classes.OldTrajectory, posInfo::classes.PosInfo
 
     idx_s = findmin(DistS,1)[2]     # find the indices of the nearest points in the old laps
 
-    off = 5
+    off = 1
     idx_s = idx_s + off
 
     # Propagate the obstacle for the prediction horizon
 
-    obs_prop_s  = obs[1,1,:] + dt*N*obs[1,3,:]
+    obs_prop_s  = obs[1,1,:] + dt*(N-obstacle.inv_step)*obs[1,3,:]
     obs_prop_ey = obs[1,2,:]
    
 
@@ -81,10 +81,11 @@ function convhullStates(oldTraj::classes.OldTrajectory, posInfo::classes.PosInfo
                 ellipse_check = (((selectedStates.selStates[i=(j*Np)+1:(j+1)*Np,1]-obs_prop_s[n])/r_s).^2) + (((selectedStates.selStates[i=(j*Np)+1:(j+1)*Np,2]-obs_prop_ey[n])/r_ey).^2)
                 
                 if any(x->x<=1, ellipse_check) == true  # if any of the selected states is in the ellipse
-
+                    #println("FLAG****************************************************************************************************************")
                     index = find(ellipse_check.<=1)     # find all the states in the ellipse 
 
-                    mpcParams.Q_obs[i=(j*Np)+(index[1]-obstacle.inv_step)+1:(j+1)*Np] =  10   # and set the values of the weight to 10, so that they are excluded from optimization
+                    mpcParams.Q_obs[i=(j*Np)+(index[1])+1:(j+1)*Np] =  10   # and set the values of the weight to 10, so that they are excluded from optimization
+                    #println(mpcParams.Q_obs)
                 end
             end
         end     

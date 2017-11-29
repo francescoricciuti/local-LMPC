@@ -519,7 +519,7 @@ type initObsModel
         # Soft Constraint on the Obstacle
         # --------------------------------
         #@NLexpression(mdl, obstacleSlackCost, sum{-log(eps_constraint[i]),i=1:N})
-        @NLexpression(mdl, obstacleSlackCost, 0.01*sum{-log(((z_Ol[i,1]-obs[i,1])/r_s)^2 + ((z_Ol[i,2]-obs[i,2])/r_ey)^2 -1),i=1:N+1})
+        @NLexpression(mdl, obstacleSlackCost, 0.05*sum{-log( ((z_Ol[i,1]-obs[i,1])/r_s)^2 + ((z_Ol[i,2]-obs[i,2])/r_ey)^2 -1),i=2:N+1})
 
         # Overall Cost function (objective of the minimization)
         # -----------------------------------------------------
